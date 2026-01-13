@@ -1,2 +1,9 @@
-**/**.venv**/
-**/**test**/
+**/**.venv**
+**/**test** # this ignores all test files and folders
+**/**.data**
+**/**.test**
+/data/**
+.env
+./push.sh
+
+**/**__pycache__
