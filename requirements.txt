@@ -2,7 +2,7 @@
 # Pillow
 # pandas
 # reportlab
-# openpyxl
+openpyxl
 PyMuPDF
 PyQt6
 qtawesome
