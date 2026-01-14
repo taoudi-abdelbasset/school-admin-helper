@@ -3,8 +3,8 @@ name: Build TooHelper for Windows/macOS/Linux
 on:
   push:
     tags:
-      - "v*"               # e.g. v1.0.0 triggers it
-  workflow_dispatch:       # Manual run from Actions tab too
+      - "v*"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -54,26 +54,41 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: TooHelper-${{ runner.os }}
-        path: TooHelper-*.zip || TooHelper-*.tar.gz
+        path: |
+          TooHelper-windows-x64.zip
+          TooHelper-macos.app.zip
+          TooHelper-macos.zip
+          TooHelper-linux-x64.tar.gz
 
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
 
     steps:
     - uses: actions/download-artifact@v4
       with:
         path: artifacts
+        merge-multiple: true
+
+    - name: Display structure
+      run: ls -R artifacts
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        files: artifacts/*/*.zip || artifacts/*/*.tar.gz
+        files: |
+          artifacts/**/*.zip
+          artifacts/**/*.tar.gz
         tag_name: ${{ github.ref_name }}
         name: TooHelper ${{ github.ref_name }}
         body: |
-          Download for your OS:
-          • Windows: TooHelper-windows-x64.zip (extract → run TooHelper.exe)
-          • macOS: TooHelper-macos.app.zip (extract → open .app)
-          • Linux: TooHelper-linux-x64.tar.gz (extract → ./TooHelper)
+          ## Download for your OS:
+          
+          **Windows:** TooHelper-windows-x64.zip (extract → run TooHelper.exe)
+          
+          **macOS:** TooHelper-macos.app.zip (extract → open .app)
+          
+          **Linux:** TooHelper-linux-x64.tar.gz (extract → ./TooHelper)
