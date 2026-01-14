@@ -12,3 +12,4 @@ push.sh
 **/**.egg-info**
 __pycache__/
 dist/
+build/
