@@ -5,3 +5,4 @@
 # openpyxl
 PyMuPDF
 PyQt6
+qtawesome

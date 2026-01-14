@@ -1,6 +1,6 @@
 """
-Project List Section - PyQt6 Version (Better Design)
-Place in: tools/pdf_generator/project_list_pyqt6.py
+Project List Section - With Translation Support
+Replace tools/pdf_generator/project_list_pyqt6.py with this
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -13,6 +13,8 @@ from datetime import datetime
 import os
 import base64
 
+from config.language_manager import get_language_manager
+
 
 class ProjectModal(QDialog):
     """Compact modal dialog for creating/editing projects"""
@@ -23,8 +25,10 @@ class ProjectModal(QDialog):
         self.project_data = project_data or {}
         self.pdf_file_path = None
         self.pdf_file_data = None
+        self.lang_manager = get_language_manager()
         
-        self.setWindowTitle("Create New Project" if mode == "create" else "Edit Project")
+        title_key = 'pdf_generator.create_project' if mode == "create" else 'pdf_generator.edit_project'
+        self.setWindowTitle(self.lang_manager.get(title_key, "Create New Project" if mode == "create" else "Edit Project"))
         self.setModal(True)
         self.setFixedSize(500, 400)
         
@@ -45,7 +49,7 @@ class ProjectModal(QDialog):
         layout.addWidget(title)
         
         # Project Name
-        name_label = QLabel("Project Name *")
+        name_label = QLabel(f"{self.lang_manager.get('pdf_generator.project_name', 'Project Name')} *")
         name_label.setStyleSheet("font-weight: bold; color: #e0e0e0; font-size: 12px;")
         layout.addWidget(name_label)
         
@@ -67,7 +71,7 @@ class ProjectModal(QDialog):
         layout.addWidget(self.name_entry)
         
         # Description
-        desc_label = QLabel("Description")
+        desc_label = QLabel(self.lang_manager.get('pdf_generator.description', 'Description'))
         desc_label.setStyleSheet("font-weight: bold; color: #e0e0e0; font-size: 12px;")
         layout.addWidget(desc_label)
         
@@ -90,7 +94,7 @@ class ProjectModal(QDialog):
         layout.addWidget(self.desc_textbox)
         
         # PDF File
-        pdf_label = QLabel("PDF Template *")
+        pdf_label = QLabel(f"{self.lang_manager.get('pdf_generator.pdf_template', 'PDF Template')} *")
         pdf_label.setStyleSheet("font-weight: bold; color: #e0e0e0; font-size: 12px;")
         layout.addWidget(pdf_label)
         
@@ -106,11 +110,11 @@ class ProjectModal(QDialog):
         pdf_layout = QHBoxLayout(pdf_frame)
         pdf_layout.setContentsMargins(8, 4, 8, 4)
         
-        self.pdf_filename_label = QLabel("No file selected")
+        self.pdf_filename_label = QLabel(self.lang_manager.get('pdf_generator.no_file', 'No file selected'))
         self.pdf_filename_label.setStyleSheet("color: #808080; font-size: 12px;")
         pdf_layout.addWidget(self.pdf_filename_label, 1)
         
-        select_pdf_btn = QPushButton("Browse...")
+        select_pdf_btn = QPushButton(self.lang_manager.get('pdf_generator.browse', 'Browse...'))
         select_pdf_btn.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
@@ -138,7 +142,7 @@ class ProjectModal(QDialog):
         btn_layout.setContentsMargins(0, 0, 0, 0)
         btn_layout.setSpacing(10)
         
-        cancel_btn = QPushButton("Cancel")
+        cancel_btn = QPushButton(self.lang_manager.get('pdf_generator.cancel', 'Cancel'))
         cancel_btn.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
@@ -157,7 +161,8 @@ class ProjectModal(QDialog):
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
         
-        save_text = "Create" if self.mode == "create" else "Save"
+        save_text = self.lang_manager.get('pdf_generator.create' if self.mode == "create" else 'pdf_generator.save', 
+                                          "Create" if self.mode == "create" else "Save")
         save_btn = QPushButton(save_text)
         save_btn.setStyleSheet("""
             QPushButton {
@@ -240,13 +245,14 @@ class ProjectModal(QDialog):
 
 
 class ProjectListSectionPyQt6(QWidget):
-    """Project list section with clean row-based design"""
+    """Project list section with translation support"""
     
     def __init__(self, data_manager, pdf_data_manager, on_open_project, parent=None):
         super().__init__(parent)
         self.data_manager = data_manager
         self.pdf_data_manager = pdf_data_manager
         self.on_open_project = on_open_project
+        self.lang_manager = get_language_manager()
         
         self.projects = []
         self.load_projects()
@@ -273,13 +279,13 @@ class ProjectListSectionPyQt6(QWidget):
         header_layout = QHBoxLayout(header_bar)
         header_layout.setContentsMargins(30, 20, 30, 20)
         
-        title = QLabel("📂 Projects")
+        title = QLabel(f"📂 {self.lang_manager.get('pdf_generator.projects', 'Projects')}")
         title.setStyleSheet("font-size: 22px; font-weight: bold; color: white;")
         header_layout.addWidget(title)
         
         header_layout.addStretch()
         
-        create_btn = QPushButton("➕ New Project")
+        create_btn = QPushButton(f"➕ {self.lang_manager.get('pdf_generator.new_project', 'New Project')}")
         create_btn.setStyleSheet("""
             QPushButton {
                 background-color: #1f6aa5;
@@ -343,12 +349,12 @@ class ProjectListSectionPyQt6(QWidget):
         
         empty_layout.addSpacing(20)
         
-        title = QLabel("No Projects Yet")
+        title = QLabel(self.lang_manager.get('pdf_generator.no_projects', 'No Projects Yet'))
         title.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(title)
         
-        subtitle = QLabel("Create your first PDF template project to get started")
+        subtitle = QLabel(self.lang_manager.get('pdf_generator.no_projects_desc', 'Create your first PDF template project to get started'))
         subtitle.setStyleSheet("font-size: 14px; color: #808080; margin-top: 8px;")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(subtitle)
@@ -426,7 +432,7 @@ class ProjectListSectionPyQt6(QWidget):
         btn_layout.setSpacing(8)
         
         # Design button
-        design_btn = QPushButton("🎨 Design")
+        design_btn = QPushButton(f"🎨 {self.lang_manager.get('pdf_generator.design', 'Design')}")
         design_btn.setStyleSheet("""
             QPushButton {
                 background-color: #1f6aa5;
@@ -528,7 +534,11 @@ class ProjectListSectionPyQt6(QWidget):
         self.load_projects()
         self.refresh_projects_display()
         
-        QMessageBox.information(self, "Success", f"Project '{data['name']}' created!")
+        QMessageBox.information(
+            self, 
+            self.lang_manager.get('pdf_generator.success', 'Success'),
+            f"{self.lang_manager.get('pdf_generator.project_created', 'Project created!')}"
+        )
     
     def handle_edit_project(self, project_id, data):
         """Handle project edit"""
@@ -550,14 +560,18 @@ class ProjectListSectionPyQt6(QWidget):
         self.load_projects()
         self.refresh_projects_display()
         
-        QMessageBox.information(self, "Success", f"Project '{data['name']}' updated!")
+        QMessageBox.information(
+            self,
+            self.lang_manager.get('pdf_generator.success', 'Success'),
+            f"{self.lang_manager.get('pdf_generator.project_updated', 'Project updated!')}"
+        )
     
     def confirm_delete(self, project):
         """Confirm and delete"""
         reply = QMessageBox.question(
             self,
-            "Confirm Delete",
-            f"Are you sure you want to delete '{project['name']}'?\n\nThis action cannot be undone.",
+            self.lang_manager.get('pdf_generator.confirm_delete', 'Confirm Delete'),
+            f"{self.lang_manager.get('pdf_generator.delete_message', 'Are you sure you want to delete this project? This action cannot be undone.')}",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
@@ -566,4 +580,8 @@ class ProjectListSectionPyQt6(QWidget):
             self.pdf_data_manager.delete_project(project["id"])
             self.load_projects()
             self.refresh_projects_display()
-            QMessageBox.information(self, "Deleted", f"Project '{project['name']}' deleted.")
+            QMessageBox.information(
+                self,
+                self.lang_manager.get('pdf_generator.success', 'Success'),
+                f"{self.lang_manager.get('pdf_generator.project_deleted', 'Project deleted.')}"
+            )

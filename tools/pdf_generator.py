@@ -167,12 +167,72 @@ class PDFGeneratorTool(BaseToolPyQt6):
         print(f"✅ Opened data section for: {self.current_project['name']}")
     
     def generate_pdf(self):
-        """Generate PDF from data (placeholder for now)"""
-        QMessageBox.information(
+        """Generate P`DF from current data"""
+        if not self.csv_data:
+            QMessageBox.warning(
+                self, 
+                self.lang_manager.get('common.error', 'Error'),
+                self.lang_manager.get('pdf_generator.no_data_generate', 'No data to generate PDFs from.\n\nPlease add some data rows first!')
+            )
+            return
+        
+        # Get output file path
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_name = f"{self.project['name']}_output_{timestamp}.pdf"
+        
+        file_path, _ = QFileDialog.getSaveFileName(
             self,
-            "PDF Generation",
-            "PDF generation will be implemented next!\n\nFor now, this validates that data section is working."
+            self.lang_manager.get('pdf_generator.save_generated_pdf', 'Save Generated PDF'),
+            default_name,
+            "PDF files (*.pdf)"
         )
+        
+        if not file_path:
+            return
+        
+        # Create engine and show progress dialog
+        engine = PDFGeneratorEngine()
+        
+        dialog = PDFGenerationDialog(
+            engine,
+            self.project,
+            self.pdf_data_manager,
+            file_path,
+            parent=self
+        )
+        
+        result = dialog.exec()
+        
+        if dialog.is_complete:
+            reply = QMessageBox.information(
+                self,
+                self.lang_manager.get('pdf_generator.success', 'Success'),
+                self.lang_manager.get(
+                    'pdf_generator.pdf_generated',
+                    f'Successfully generated {len(self.csv_data)} PDF pages!\n\nSaved to:\n{file_path}\n\nWould you like to open the file?'
+                ),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                # Open file with default PDF viewer
+                try:
+                    import subprocess
+                    import platform
+                    
+                    if platform.system() == 'Windows':
+                        os.startfile(file_path)
+                    elif platform.system() == 'Darwin':  # macOS
+                        subprocess.run(['open', file_path])
+                    else:  # Linux
+                        subprocess.run(['xdg-open', file_path])
+                except Exception as e:
+                    QMessageBox.warning(
+                        self,
+                        self.lang_manager.get('common.error', 'Error'),
+                        f"{self.lang_manager.get('pdf_generator.open_failed', 'Could not open PDF')}:\n{str(e)}"
+                    )
     
     def on_template_saved(self, project_id):
         """Handle template save"""

@@ -32,6 +32,8 @@ except ImportError:
     print("⚠️ PyMuPDF not installed")
     fitz = None
 
+from config.language_manager import get_language_manager  # Add this import
+
 
 class ResizeHandle(QGraphicsEllipseItem):
     """Resize handle for field"""
@@ -108,9 +110,20 @@ class FieldGraphicsItem(QGraphicsRectItem):
     """Field with resize handles and text"""
     
     def __init__(self, field_data, parent_editor):
-        x, y = field_data["x"], field_data["y"]
-        w, h = field_data.get("width", 180), field_data.get("height", 36)
-        super().__init__(0, 0, w, h)
+        # Get actual coordinates from field
+        actual_x = field_data["x"]
+        actual_y = field_data["y"]
+        actual_w = field_data.get("width", 180)
+        actual_h = field_data.get("height", 36)
+        
+        # Scale for display if render_scale exists
+        scale = getattr(parent_editor, 'render_scale', 1.0)
+        display_x = actual_x * scale
+        display_y = actual_y * scale
+        display_w = actual_w * scale
+        display_h = actual_h * scale
+        
+        super().__init__(0, 0, display_w, display_h)
         
         self.field = field_data
         self.parent_editor = parent_editor
@@ -120,8 +133,13 @@ class FieldGraphicsItem(QGraphicsRectItem):
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
         
-        # Set position
-        self.setPos(x, y)
+        # Set position (in display coordinates)
+        self.setPos(display_x, display_y)
+        
+        print(f"  Creating field item:")
+        print(f"    Actual coords: ({actual_x}, {actual_y}) {actual_w}x{actual_h}")
+        print(f"    Display coords: ({display_x}, {display_y}) {display_w}x{display_h}")
+        print(f"    Scale factor: {scale}x")
         
         # Style
         self.setPen(QPen(QColor("#9e9e9e"), 1, Qt.PenStyle.DashLine))
@@ -130,7 +148,7 @@ class FieldGraphicsItem(QGraphicsRectItem):
         # Add text item
         self.text_item = QGraphicsTextItem(field_data["data_node"], self)
         
-        # Resize handles (hidden initially)
+        # Resize handles
         self.handles = {
             "nw": ResizeHandle(self, "nw"),
             "ne": ResizeHandle(self, "ne"),
@@ -144,25 +162,30 @@ class FieldGraphicsItem(QGraphicsRectItem):
         
         self.update_text_display()
         self.update_handles_position()
-    
+        
     def resize_from_handle(self, new_width, new_height, new_x="x", new_y="y"):
-        """Resize field from handle drag"""
+        """Resize field from handle drag - converts display to actual coords"""
+        scale = getattr(self.parent_editor, 'render_scale', 1.0)
+        
+        # Convert display size to actual PDF size
+        actual_new_width = int(new_width / scale)
+        actual_new_height = int(new_height / scale)
+        
         old_w = self.field["width"]
         old_h = self.field["height"]
-        old_x = self.field["x"]
-        old_y = self.field["y"]
         
-        self.field["width"] = int(new_width)
-        self.field["height"] = int(new_height)
+        self.field["width"] = actual_new_width
+        self.field["height"] = actual_new_height
         
         if new_x != "x":
-            self.field["x"] = int(new_x)
+            actual_new_x = int(new_x / scale)
+            self.field["x"] = actual_new_x
+            
         if new_y != "y":
-            self.field["y"] = int(new_y)
+            actual_new_y = int(new_y / scale)
+            self.field["y"] = actual_new_y
         
         print(f"🔧 RESIZE: {old_w}x{old_h} → {self.field['width']}x{self.field['height']}")
-        if new_x != "x" or new_y != "y":
-            print(f"   Position: ({old_x}, {old_y}) → ({self.field['x']}, {self.field['y']})")
         
         self.update_from_field()
         
@@ -190,7 +213,7 @@ class FieldGraphicsItem(QGraphicsRectItem):
         self.text_item.setDefaultTextColor(QColor(self.field.get("color", "#000000")))
         self.text_item.setPlainText(self.field["data_node"])
         
-        # Alignment
+        # Alignment - use DISPLAY size for positioning
         w = self.rect().width()
         h = self.rect().height()
         text_width = self.text_item.boundingRect().width()
@@ -208,13 +231,25 @@ class FieldGraphicsItem(QGraphicsRectItem):
         self.text_item.setPos(x, y)
     
     def update_from_field(self):
-        """Update visual from field data"""
-        # Update size
-        w, h = self.field.get("width", 180), self.field.get("height", 36)
-        self.setRect(0, 0, w, h)
+        """Update visual from field data - FIXED to respect scaling"""
+        # Get actual values from field (in PDF coordinates)
+        actual_w = self.field.get("width", 180)
+        actual_h = self.field.get("height", 36)
+        actual_x = self.field.get("x", 200)
+        actual_y = self.field.get("y", 200)
         
-        # Update position
-        self.setPos(self.field["x"], self.field["y"])
+        # Scale for display
+        scale = getattr(self.parent_editor, 'render_scale', 1.0)
+        display_w = actual_w * scale
+        display_h = actual_h * scale
+        display_x = actual_x * scale
+        display_y = actual_y * scale
+        
+        # Update size (in display coordinates)
+        self.setRect(0, 0, display_w, display_h)
+        
+        # Update position (in display coordinates)
+        self.setPos(display_x, display_y)
         
         # Update text
         self.update_text_display()
@@ -223,17 +258,25 @@ class FieldGraphicsItem(QGraphicsRectItem):
         self.update_handles_position()
     
     def itemChange(self, change, value):
+        """Handle item changes - converts display to actual coords"""
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
-            # Update field data when position changes
-            old_x = self.field["x"]
-            old_y = self.field["y"]
-            
             pos = self.pos()
-            self.field["x"] = int(pos.x())
-            self.field["y"] = int(pos.y())
             
-            if old_x != self.field["x"] or old_y != self.field["y"]:
-                print(f"📍 MOVED: ({old_x}, {old_y}) → ({self.field['x']}, {self.field['y']})")
+            # Convert display coordinates to actual PDF coordinates
+            scale = getattr(self.parent_editor, 'render_scale', 1.0)
+            actual_x = int(pos.x() / scale)
+            actual_y = int(pos.y() / scale)
+            
+            # Store in actual PDF coordinates
+            self.field["x"] = actual_x
+            self.field["y"] = actual_y
+            
+            # Check bounds
+            if hasattr(self.parent_editor, 'actual_pdf_height'):
+                if actual_y > self.parent_editor.actual_pdf_height:
+                    print(f"⚠️ WARNING: Field Y ({actual_y}) is below page bottom ({int(self.parent_editor.actual_pdf_height)})!")
+                if actual_y < 0:
+                    print(f"⚠️ WARNING: Field Y ({actual_y}) is above page top!")
             
             if self.parent_editor:
                 self.parent_editor.update_properties_display()
@@ -241,19 +284,16 @@ class FieldGraphicsItem(QGraphicsRectItem):
         elif change == QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged:
             if value:  # Selected
                 self.setPen(QPen(QColor("#2196f3"), 2, Qt.PenStyle.SolidLine))
-                # Show handles
                 for handle in self.handles.values():
                     handle.setVisible(True)
                 
                 if self.parent_editor:
                     self.parent_editor.select_field(self.field)
             else:  # Deselected
-                print(f"❌ DESELECTED: {self.field.get('data_node')}\n")
                 self.setPen(QPen(QColor("#9e9e9e"), 1, Qt.PenStyle.DashLine))
-                # Hide handles
                 for handle in self.handles.values():
                     handle.setVisible(False)
-                
+        
         return super().itemChange(change, value)
 
 
@@ -286,12 +326,14 @@ class PDFTemplateEditor(QWidget):
         self.view.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.view.setBackgroundBrush(QBrush(QColor("#2d2d2d")))
         
+        self.lang_manager = get_language_manager()  # Add language manager
+        
         self.setup_ui()
         self.load_pdf_background()
         self.load_fields()
 
     def load_pdf_background(self):
-        """Load PDF as background"""
+        """Load PDF as background - FIXED to use actual PDF dimensions"""
         pdf_filename = self.project.get("pdf_file_name")
         if not pdf_filename:
             return
@@ -304,18 +346,70 @@ class PDFTemplateEditor(QWidget):
             pdf_bytes = base64.b64decode(pdf_data)
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
             page = doc[0]
+            
+            # 🔴 CRITICAL: Store the ACTUAL PDF page dimensions
+            # These are the dimensions PyMuPDF will use when generating
+            self.actual_pdf_width = page.rect.width
+            self.actual_pdf_height = page.rect.height
+            
+            print("\n" + "="*70)
+            print("📐 PDF DIMENSIONS (What PyMuPDF Actually Sees)")
+            print("="*70)
+            print(f"Actual PDF size: {self.actual_pdf_width} x {self.actual_pdf_height}")
+            print("="*70 + "\n")
 
-            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+            # Render at 2x for better quality, but TRACK the scale factor
+            self.render_scale = 2.0
+            pix = page.get_pixmap(matrix=fitz.Matrix(self.render_scale, self.render_scale))
+            
             img = QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format.Format_RGB888)
             pixmap = QPixmap.fromImage(img)
 
-            self.scene.addPixmap(pixmap)
+            # Add to scene
+            self.background_item = self.scene.addPixmap(pixmap)
             self.scene.setSceneRect(0, 0, pixmap.width(), pixmap.height())
             
-            print(f"✅ PDF loaded: {pixmap.width()}x{pixmap.height()}")
+            # Show info overlay
+            self._show_dimension_info(pixmap.width(), pixmap.height())
+            
+            print(f"✅ PDF loaded and rendered")
+            print(f"   Rendered size: {pixmap.width()}x{pixmap.height()} (at {self.render_scale}x scale)")
+            print(f"   Actual PDF: {self.actual_pdf_width}x{self.actual_pdf_height}")
+            print(f"\n⚠️ IMPORTANT: Field coordinates are in ACTUAL PDF units ({self.actual_pdf_width}x{self.actual_pdf_height})")
+            print(f"   Display scale is {self.render_scale}x for better visibility\n")
             
         except Exception as e:
             print(f"❌ Error loading PDF: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _show_dimension_info(self, display_width, display_height):
+        """Show PDF dimension info on canvas"""
+        from PyQt6.QtWidgets import QGraphicsTextItem
+        from PyQt6.QtGui import QFont, QColor
+        
+        info_text = QGraphicsTextItem()
+        info_text.setPlainText(
+            f"📐 PDF: {int(self.actual_pdf_width)}×{int(self.actual_pdf_height)}pt\n"
+            f"🖥️ Display: {display_width}×{display_height}px (@{self.render_scale}x)\n"
+            f"⚠️ Keep fields within bounds!"
+        )
+        
+        font = QFont("Arial", 12, QFont.Weight.Bold)
+        info_text.setFont(font)
+        info_text.setDefaultTextColor(QColor("#ff3333"))
+        info_text.setPos(10, 10)
+        
+        # Add semi-transparent background
+        from PyQt6.QtWidgets import QGraphicsRectItem
+        from PyQt6.QtGui import QBrush, QPen
+        
+        bg = QGraphicsRectItem(5, 5, 400, 80)
+        bg.setBrush(QBrush(QColor(0, 0, 0, 200)))
+        bg.setPen(QPen(QColor("#ff3333"), 2))
+        
+        self.scene.addItem(bg)
+        self.scene.addItem(info_text)
 
     def setup_ui(self):
         """Create UI"""
@@ -351,11 +445,11 @@ class PDFTemplateEditor(QWidget):
         layout.setSpacing(10)
         
         # Title
-        title = QLabel("📊 Data Nodes")
+        title = QLabel(f"📊 {self.lang_manager.get('pdf_generator.data_nodes', 'Data Nodes')}")
         title.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
         layout.addWidget(title)
         
-        subtitle = QLabel("One data node = multiple fields")
+        subtitle = QLabel(self.lang_manager.get('pdf_generator.data_nodes_desc', 'One data node = multiple fields'))
         subtitle.setStyleSheet("color: #808080; font-size: 10px; margin-bottom: 5px;")
         layout.addWidget(subtitle)
         
@@ -366,7 +460,7 @@ class PDFTemplateEditor(QWidget):
         input_layout.setSpacing(8)
         
         self.node_input = QLineEdit()
-        self.node_input.setPlaceholderText("e.g., firstname")
+        self.node_input.setPlaceholderText(self.lang_manager.get('pdf_generator.node_placeholder', 'e.g., firstname'))
         self.node_input.setStyleSheet("""
             QLineEdit {
                 padding: 8px;
@@ -431,30 +525,30 @@ class PDFTemplateEditor(QWidget):
         toolbar_layout = QHBoxLayout(toolbar)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         
-        hint = QLabel("💡 Drag to move • Drag handles to resize")
+        hint = QLabel(self.lang_manager.get('pdf_generator.drag_hint', '💡 Drag to move • Drag handles to resize'))
         hint.setStyleSheet("color: #b0b0b0; font-size: 11px;")
         toolbar_layout.addWidget(hint)
         
         toolbar_layout.addStretch()
         
-        zoom_in_btn = QPushButton("🔍+")
+        zoom_in_btn = QPushButton(self.lang_manager.get('pdf_generator.zoom_in', '🔍+'))
         zoom_in_btn.setStyleSheet(self._get_toolbar_btn_style())
         zoom_in_btn.clicked.connect(self.zoom_in)
         toolbar_layout.addWidget(zoom_in_btn)
         
-        zoom_out_btn = QPushButton("🔍-")
+        zoom_out_btn = QPushButton(self.lang_manager.get('pdf_generator.zoom_out', '🔍-'))
         zoom_out_btn.setStyleSheet(self._get_toolbar_btn_style())
         zoom_out_btn.clicked.connect(self.zoom_out)
         toolbar_layout.addWidget(zoom_out_btn)
         
-        fit_btn = QPushButton("📏 Fit")
+        fit_btn = QPushButton(self.lang_manager.get('pdf_generator.zoom_fit', 'Fit'))
         fit_btn.setStyleSheet(self._get_toolbar_btn_style())
         fit_btn.clicked.connect(self.zoom_fit)
         toolbar_layout.addWidget(fit_btn)
         
         toolbar_layout.addSpacing(20)
         
-        back_btn = QPushButton("← Back")
+        back_btn = QPushButton(f"← {self.lang_manager.get('pdf_generator.back', 'Back')}")
         back_btn.setStyleSheet("""
             QPushButton {
                 background: #404040;
@@ -471,7 +565,7 @@ class PDFTemplateEditor(QWidget):
         back_btn.clicked.connect(lambda: self.backRequested.emit())
         toolbar_layout.addWidget(back_btn)
         
-        save_btn = QPushButton("💾 Save")
+        save_btn = QPushButton(f"💾 {self.lang_manager.get('pdf_generator.save', 'Save')}")
         save_btn.setStyleSheet("""
             QPushButton {
                 background: #2fa572;
@@ -490,7 +584,7 @@ class PDFTemplateEditor(QWidget):
         toolbar_layout.addWidget(save_btn)
         
         # Data Table button
-        data_btn = QPushButton("📊 Data Table")
+        data_btn = QPushButton(f"📊 {self.lang_manager.get('pdf_generator.data_table', 'Data Table')}")
         data_btn.setStyleSheet("""
             QPushButton {
                 background: #6b46c1;
@@ -541,7 +635,7 @@ class PDFTemplateEditor(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(15, 15, 15, 15)
         
-        title = QLabel("⚙️ Field Properties")
+        title = QLabel(f"⚙️ {self.lang_manager.get('pdf_generator.field_properties', 'Field Properties')}")
         title.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
         layout.addWidget(title)
         
@@ -576,11 +670,11 @@ class PDFTemplateEditor(QWidget):
         self.props_container_layout.setSpacing(15)
         
         # Dimensions
-        self._add_section_label_to_container("📏 Dimensions")
+        self._add_section_label_to_container(self.lang_manager.get('pdf_generator.dimensions', 'Dimensions'))
         
         self.prop_width = QSpinBox()
         self.prop_width.setRange(50, 2000)
-        self.prop_width.setPrefix("Width: ")
+        self.prop_width.setPrefix(self.lang_manager.get('pdf_generator.width', 'Width') + ": ")
         self.prop_width.setSuffix(" px")
         self.prop_width.setStyleSheet(self._get_input_style())
         self.prop_width.valueChanged.connect(self.update_field_property)
@@ -588,14 +682,14 @@ class PDFTemplateEditor(QWidget):
         
         self.prop_height = QSpinBox()
         self.prop_height.setRange(20, 2000)
-        self.prop_height.setPrefix("Height: ")
+        self.prop_height.setPrefix(self.lang_manager.get('pdf_generator.height', 'Height') + ": ")
         self.prop_height.setSuffix(" px")
         self.prop_height.setStyleSheet(self._get_input_style())
         self.prop_height.valueChanged.connect(self.update_field_property)
         self.props_container_layout.addWidget(self.prop_height)
         
         # Font
-        self._add_section_label_to_container("🔤 Font")
+        self._add_section_label_to_container(self.lang_manager.get('pdf_generator.font', 'Font'))
         
         self.prop_font = QComboBox()
         self.prop_font.addItems(["Arial", "Helvetica", "Times New Roman", "Courier New", "Verdana"])
@@ -605,23 +699,23 @@ class PDFTemplateEditor(QWidget):
         
         self.prop_size = QSpinBox()
         self.prop_size.setRange(6, 144)
-        self.prop_size.setPrefix("Size: ")
+        self.prop_size.setPrefix(self.lang_manager.get('pdf_generator.font_size', 'Size') + ": ")
         self.prop_size.setSuffix(" pt")
         self.prop_size.setStyleSheet(self._get_input_style())
         self.prop_size.valueChanged.connect(self.update_field_property)
         self.props_container_layout.addWidget(self.prop_size)
         
         # Text Alignment
-        self._add_section_label_to_container("↔️ Text Alignment")
+        self._add_section_label_to_container(self.lang_manager.get('pdf_generator.text_alignment', 'Text Alignment'))
         
         align_frame = QFrame()
         align_layout = QHBoxLayout(align_frame)
         align_layout.setContentsMargins(0, 0, 0, 0)
         align_layout.setSpacing(8)
         
-        self.prop_align_left = QPushButton("⬅️ Left")
-        self.prop_align_center = QPushButton("↔️ Center")
-        self.prop_align_right = QPushButton("➡️ Right")
+        self.prop_align_left = QPushButton(self.lang_manager.get('pdf_generator.align_left', 'Left'))
+        self.prop_align_center = QPushButton(self.lang_manager.get('pdf_generator.align_center', 'Center'))
+        self.prop_align_right = QPushButton(self.lang_manager.get('pdf_generator.align_right', 'Right'))
         
         for btn in [self.prop_align_left, self.prop_align_center, self.prop_align_right]:
             btn.setStyleSheet("""
@@ -649,25 +743,25 @@ class PDFTemplateEditor(QWidget):
         self.props_container_layout.addWidget(align_frame)
         
         # Style
-        self._add_section_label_to_container("✨ Style")
+        self._add_section_label_to_container(self.lang_manager.get('pdf_generator.style', 'Style'))
         
-        self.prop_bold = QCheckBox("Bold")
+        self.prop_bold = QCheckBox(self.lang_manager.get('pdf_generator.bold', 'Bold'))
         self.prop_bold.setStyleSheet("color: #e0e0e0;")
         self.prop_bold.stateChanged.connect(self.update_field_property)
         self.props_container_layout.addWidget(self.prop_bold)
         
-        self.prop_italic = QCheckBox("Italic")
+        self.prop_italic = QCheckBox(self.lang_manager.get('pdf_generator.italic', 'Italic'))
         self.prop_italic.setStyleSheet("color: #e0e0e0;")
         self.prop_italic.stateChanged.connect(self.update_field_property)
         self.props_container_layout.addWidget(self.prop_italic)
         
-        self.prop_underline = QCheckBox("Underline")
+        self.prop_underline = QCheckBox(self.lang_manager.get('pdf_generator.underline', 'Underline'))
         self.prop_underline.setStyleSheet("color: #e0e0e0;")
         self.prop_underline.stateChanged.connect(self.update_field_property)
         self.props_container_layout.addWidget(self.prop_underline)
         
         # Color
-        self._add_section_label_to_container("🎨 Color")
+        self._add_section_label_to_container(self.lang_manager.get('pdf_generator.color', 'Color'))
         
         color_frame = QFrame()
         color_layout = QHBoxLayout(color_frame)
@@ -679,7 +773,7 @@ class PDFTemplateEditor(QWidget):
         self.prop_color_preview.setStyleSheet("background: #000000; border: 1px solid #404040; border-radius: 4px;")
         color_layout.addWidget(self.prop_color_preview)
         
-        color_btn = QPushButton("Pick Color")
+        color_btn = QPushButton(self.lang_manager.get('pdf_generator.pick_color', 'Pick Color'))
         color_btn.setStyleSheet("""
             QPushButton {
                 background: #404040;
@@ -701,7 +795,7 @@ class PDFTemplateEditor(QWidget):
         # Delete
         self.props_container_layout.addSpacing(20)
         
-        delete_btn = QPushButton("🗑️ Delete Field")
+        delete_btn = QPushButton(self.lang_manager.get('pdf_generator.delete_field', 'Delete Field'))
         delete_btn.setStyleSheet("""
             QPushButton {
                 background: #d32f2f;
@@ -748,7 +842,7 @@ class PDFTemplateEditor(QWidget):
         """Enable/disable property inputs"""
         self.props_container.setEnabled(enabled)
         if not enabled:
-            self.prop_data_node.setText("No field selected")
+            self.prop_data_node.setText(self.lang_manager.get('pdf_generator.no_field_selected', 'No field selected'))
             self.prop_data_node.setStyleSheet("color: #808080; font-size: 16px; font-weight: bold;")
         else:
             self.prop_data_node.setStyleSheet("color: #2196f3; font-size: 16px; font-weight: bold;")
@@ -793,7 +887,8 @@ class PDFTemplateEditor(QWidget):
             return
         
         if node_name in self.data_nodes:
-            QMessageBox.warning(self, "Duplicate", f"Data node '{node_name}' already exists!")
+            QMessageBox.warning(self, self.lang_manager.get('pdf_generator.duplicate_node_title', 'Duplicate'), 
+                                self.lang_manager.get('pdf_generator.duplicate_node_message', "Data node '{name}' already exists!").format(name=node_name))
             return
         
         self.data_nodes.append(node_name)
@@ -929,8 +1024,8 @@ class PDFTemplateEditor(QWidget):
         
         reply = QMessageBox.question(
             self,
-            "Delete Data Node",
-            f"Delete '{node_name}' and its {field_count} field(s)?",
+            self.lang_manager.get('pdf_generator.delete_node_title', 'Delete Data Node'),
+            self.lang_manager.get('pdf_generator.delete_node_message', "Delete '{name}' and its {count} field(s)?").format(name=node_name, count=field_count),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         
@@ -1090,7 +1185,7 @@ class PDFTemplateEditor(QWidget):
         self.refresh_data_nodes_list()
 
     def load_fields(self):
-        """Load existing fields"""
+        """Load existing fields - FIXED to scale coordinates"""
         config = self.pdf_data_manager.load_project_config(self.project["id"])
         self.fields = config.get("fields", [])
         self.data_nodes = list(set(f["data_node"] for f in self.fields))
@@ -1101,13 +1196,7 @@ class PDFTemplateEditor(QWidget):
         
         for i, field in enumerate(self.fields):
             print(f"\nField {i+1}: {field.get('data_node', 'unnamed')}")
-            print(f"  ID: {field.get('id')}")
-            print(f"  Position: ({field.get('x', 'N/A')}, {field.get('y', 'N/A')})")
-            print(f"  Size: {field.get('width', 'N/A')}x{field.get('height', 'N/A')}")
-            print(f"  Font: {field.get('font_family', 'N/A')} {field.get('font_size', 'N/A')}pt")
-            print(f"  Color: {field.get('color', 'N/A')}")
-            print(f"  Alignment: {field.get('align', 'N/A')}")
-            print(f"  Style: Bold={field.get('bold', 'N/A')}, Italic={field.get('italic', 'N/A')}, Underline={field.get('underline', 'N/A')}")
+            print(f"  Stored coordinates: ({field.get('x')}, {field.get('y')})")
             
             # Ensure all required properties exist with defaults
             field.setdefault("width", 180)
@@ -1121,6 +1210,12 @@ class PDFTemplateEditor(QWidget):
             field.setdefault("align", "left")
             field.setdefault("x", 200)
             field.setdefault("y", 200)
+            
+            # Check if coordinates are valid
+            if hasattr(self, 'actual_pdf_height'):
+                if field['y'] > self.actual_pdf_height:
+                    print(f"  ⚠️ WARNING: Y position ({field['y']}) is BELOW page bottom ({int(self.actual_pdf_height)})!")
+                    print(f"     This field will be INVISIBLE in generated PDFs!")
             
             self.add_field_to_scene(field)
         
@@ -1154,13 +1249,13 @@ class PDFTemplateEditor(QWidget):
         if success:
             print("\n✅ Template saved successfully")
             print("="*60 + "\n")
-            QMessageBox.information(self, "Success", "Template saved successfully!")
+            QMessageBox.information(self, self.lang_manager.get('pdf_generator.success', 'Success'), self.lang_manager.get('pdf_generator.template_saved', 'Template saved successfully!'))
             self.saveRequested.emit(self.project["id"])
         else:
             print("\n❌ Failed to save template")
             print("="*60 + "\n")
-            QMessageBox.critical(self, "Error", "Failed to save template")
-    
+            QMessageBox.critical(self, self.lang_manager.get('common.error', 'Error'), self.lang_manager.get('pdf_generator.save_failed', 'Failed to save template'))
+
     def open_data_section(self):
         """Request to open data section"""
         # Save current state first

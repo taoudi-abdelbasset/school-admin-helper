@@ -31,47 +31,7 @@ class BaseToolPyQt6(QWidget):
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
         
-        self._create_header()
         self._create_tool_content()
-    
-    def _create_header(self):
-        """Create tool header with title and description"""
-        header = QFrame()
-        header.setStyleSheet("""
-            QFrame {
-                background-color: #242424;
-                border-bottom: 1px solid #3a3a3a;
-                padding: 20px 30px;
-            }
-        """)
-        
-        header_layout = QVBoxLayout(header)
-        header_layout.setContentsMargins(30, 20, 30, 20)
-        header_layout.setSpacing(4)
-        
-        # Title row with icon
-        title_row = QHBoxLayout()
-        title_row.setSpacing(8)
-        
-        icon_label = QLabel(self.TOOL_ICON)
-        icon_label.setFont(QFont("Material Symbols Rounded", 28))
-        icon_label.setStyleSheet("color: white;")
-        title_row.addWidget(icon_label)
-        
-        title_label = QLabel(self.TOOL_NAME)
-        title_label.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
-        title_row.addWidget(title_label)
-        
-        title_row.addStretch()
-        header_layout.addLayout(title_row)
-        
-        # Description (if present)
-        if self.TOOL_DESCRIPTION:
-            desc = QLabel(self.TOOL_DESCRIPTION)
-            desc.setStyleSheet("font-size: 14px; color: #b0b0b0; margin-top: 5px;")
-            header_layout.addWidget(desc)
-        
-        self.main_layout.addWidget(header)
     
     def _create_tool_content(self):
         """

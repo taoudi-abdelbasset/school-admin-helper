@@ -8,8 +8,11 @@ from PyQt6.QtCore import Qt
 from core.app_pyqt6 import ToolsHelperApp
 
 
+from config.theme_manager import ThemeManager
+from config.language_manager import get_language_manager
+from core.data_manager import DataManager
+
 def main():
-    # Enable high DPI scaling
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
@@ -17,26 +20,17 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Tools Helper")
     
-    # Set dark theme
-    app.setStyle("Fusion")
-    from PyQt6.QtGui import QPalette, QColor
+    # Load saved settings
+    data_manager = DataManager()
+    lang_manager = get_language_manager()
     
-    palette = QPalette()
-    palette.setColor(QPalette.ColorRole.Window, QColor(26, 26, 26))
-    palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
-    palette.setColor(QPalette.ColorRole.Base, QColor(36, 36, 36))
-    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(43, 43, 43))
-    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(255, 255, 255))
-    palette.setColor(QPalette.ColorRole.ToolTipText, QColor(255, 255, 255))
-    palette.setColor(QPalette.ColorRole.Text, QColor(255, 255, 255))
-    palette.setColor(QPalette.ColorRole.Button, QColor(43, 43, 43))
-    palette.setColor(QPalette.ColorRole.ButtonText, QColor(255, 255, 255))
-    palette.setColor(QPalette.ColorRole.BrightText, QColor(255, 0, 0))
-    palette.setColor(QPalette.ColorRole.Link, QColor(31, 106, 165))
-    palette.setColor(QPalette.ColorRole.Highlight, QColor(31, 106, 165))
-    palette.setColor(QPalette.ColorRole.HighlightedText, QColor(255, 255, 255))
+    # Apply saved language
+    saved_lang = data_manager.get_setting("language", "en")
+    lang_manager.load_language(saved_lang)
     
-    app.setPalette(palette)
+    # Apply saved theme
+    saved_theme = data_manager.get_setting("theme", "dark")
+    ThemeManager.apply_theme(saved_theme)
     
     # Create and show main window
     window = ToolsHelperApp()

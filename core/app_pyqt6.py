@@ -1,6 +1,6 @@
 """
-Main Application Window - PyQt6 Version
-Place in: core/app_pyqt6.py
+Main Application Window - Fixed Language Switching
+Replace core/app_pyqt6.py with this
 """
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
@@ -11,6 +11,8 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 from core.tool_manager import get_tool_manager
 from core.data_manager import DataManager
+from ui.settings_page import SettingsPage
+from config.language_manager import get_language_manager
 
 
 class Sidebar(QFrame):
@@ -22,6 +24,7 @@ class Sidebar(QFrame):
         super().__init__(parent)
         self.tool_manager = tool_manager
         self.data_manager = DataManager()
+        self.lang_manager = get_language_manager()
         self.current_button = None
         
         self.setFixedWidth(250)
@@ -56,15 +59,15 @@ class Sidebar(QFrame):
         layout.setSpacing(0)
         
         # Header
-        header = QLabel("Tools Helper")
-        header.setStyleSheet("""
+        self.header_label = QLabel("Tools Helper")
+        self.header_label.setStyleSheet("""
             padding: 20px;
             font-size: 18px;
             font-weight: bold;
             color: white;
             background-color: #2b2b2b;
         """)
-        layout.addWidget(header)
+        layout.addWidget(self.header_label)
         
         # Separator
         sep = QFrame()
@@ -73,35 +76,40 @@ class Sidebar(QFrame):
         layout.addWidget(sep)
         
         # Main menu
-        menu_items = [
-            ("🏠 Dashboard", "dashboard"),
-            ("⭐ Favorites", "favorites"),
-            ("🕐 Recent", "recent"),
-        ]
+        self.dashboard_btn = QPushButton(f"🏠 {self.lang_manager.get('sidebar.dashboard', 'Dashboard')}")
+        self.dashboard_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.dashboard_btn.clicked.connect(lambda: self.select_page("dashboard"))
+        self.dashboard_btn.setProperty("page_name", "dashboard")
+        layout.addWidget(self.dashboard_btn)
         
-        for text, page in menu_items:
-            btn = QPushButton(text)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.clicked.connect(lambda checked, p=page: self.select_page(p))
-            btn.setProperty("page_name", page)
-            layout.addWidget(btn)
-            
-            if page == "dashboard":
-                self.current_button = btn
-                btn.setProperty("selected", True)
-                btn.setStyle(btn.style())
+        self.favorites_btn = QPushButton(f"⭐ {self.lang_manager.get('sidebar.favorites', 'Favorites')}")
+        self.favorites_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.favorites_btn.clicked.connect(lambda: self.select_page("favorites"))
+        self.favorites_btn.setProperty("page_name", "favorites")
+        layout.addWidget(self.favorites_btn)
+        
+        self.recent_btn = QPushButton(f"🕐 {self.lang_manager.get('sidebar.recent', 'Recent')}")
+        self.recent_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.recent_btn.clicked.connect(lambda: self.select_page("recent"))
+        self.recent_btn.setProperty("page_name", "recent")
+        layout.addWidget(self.recent_btn)
+        
+        # Set dashboard as default
+        self.current_button = self.dashboard_btn
+        self.dashboard_btn.setProperty("selected", True)
+        self.dashboard_btn.setStyle(self.dashboard_btn.style())
         
         # Tools section
         layout.addWidget(self.create_separator())
         
-        tools_label = QLabel("🔧 Tools")
-        tools_label.setStyleSheet("""
+        self.tools_label = QLabel(f"🔧 {self.lang_manager.get('sidebar.tools', 'Tools')}")
+        self.tools_label.setStyleSheet("""
             padding: 10px 20px;
             font-size: 14px;
             font-weight: bold;
             color: white;
         """)
-        layout.addWidget(tools_label)
+        layout.addWidget(self.tools_label)
         
         # Scrollable tools
         scroll = QScrollArea()
@@ -109,10 +117,34 @@ class Sidebar(QFrame):
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setStyleSheet("background-color: transparent; border: none;")
         
-        scroll_widget = QWidget()
-        scroll_layout = QVBoxLayout(scroll_widget)
-        scroll_layout.setContentsMargins(0, 0, 0, 0)
-        scroll_layout.setSpacing(2)
+        self.scroll_widget = QWidget()
+        self.scroll_layout = QVBoxLayout(self.scroll_widget)
+        self.scroll_layout.setContentsMargins(0, 0, 0, 0)
+        self.scroll_layout.setSpacing(2)
+        
+        # Add tools
+        self.refresh_tools()
+        
+        self.scroll_layout.addStretch()
+        scroll.setWidget(self.scroll_widget)
+        layout.addWidget(scroll, 1)
+        
+        # Bottom settings
+        layout.addWidget(self.create_separator())
+        
+        self.settings_btn = QPushButton(f"⚙️ {self.lang_manager.get('sidebar.settings', 'Settings')}")
+        self.settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.settings_btn.clicked.connect(lambda: self.select_page("settings"))
+        self.settings_btn.setProperty("page_name", "settings")
+        layout.addWidget(self.settings_btn)
+    
+    def refresh_tools(self):
+        """Refresh tools list"""
+        # Clear existing tools
+        while self.scroll_layout.count() > 1:
+            child = self.scroll_layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
         
         # Add tools
         all_tools = self.tool_manager.get_all_tools()
@@ -120,20 +152,15 @@ class Sidebar(QFrame):
         
         for tool_id, tool_info in all_tools.items():
             btn = self.create_tool_button(tool_id, tool_info, tool_id in favorites)
-            scroll_layout.addWidget(btn)
-        
-        scroll_layout.addStretch()
-        scroll.setWidget(scroll_widget)
-        layout.addWidget(scroll, 1)
-        
-        # Bottom settings
-        layout.addWidget(self.create_separator())
-        
-        settings_btn = QPushButton("⚙️ Settings")
-        settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        settings_btn.clicked.connect(lambda: self.select_page("settings"))
-        settings_btn.setProperty("page_name", "settings")
-        layout.addWidget(settings_btn)
+            self.scroll_layout.insertWidget(self.scroll_layout.count() - 1, btn)
+    
+    def refresh_labels(self):
+        """Refresh all labels with new language"""
+        self.dashboard_btn.setText(f"🏠 {self.lang_manager.get('sidebar.dashboard', 'Dashboard')}")
+        self.favorites_btn.setText(f"⭐ {self.lang_manager.get('sidebar.favorites', 'Favorites')}")
+        self.recent_btn.setText(f"🕐 {self.lang_manager.get('sidebar.recent', 'Recent')}")
+        self.tools_label.setText(f"🔧 {self.lang_manager.get('sidebar.tools', 'Tools')}")
+        self.settings_btn.setText(f"⚙️ {self.lang_manager.get('sidebar.settings', 'Settings')}")
     
     def create_tool_button(self, tool_id, tool_info, is_favorite):
         btn = QPushButton(f"{tool_info['icon']} {tool_info['name']}")
@@ -173,6 +200,7 @@ class Dashboard(QWidget):
         super().__init__(parent)
         self.tool_manager = tool_manager
         self.data_manager = DataManager()
+        self.lang_manager = get_language_manager()
         self.setup_ui()
     
     def setup_ui(self):
@@ -180,18 +208,18 @@ class Dashboard(QWidget):
         layout.setContentsMargins(30, 30, 30, 30)
         
         # Welcome
-        welcome = QLabel("Welcome to Tools Helper! 👋")
-        welcome.setStyleSheet("font-size: 28px; font-weight: bold; color: white;")
-        layout.addWidget(welcome)
+        self.welcome_label = QLabel(self.lang_manager.get('dashboard.welcome', 'Welcome to Tools Helper! 👋'))
+        self.welcome_label.setStyleSheet("font-size: 28px; font-weight: bold; color: white;")
+        layout.addWidget(self.welcome_label)
         
-        subtitle = QLabel("Your all-in-one toolkit for productivity")
-        subtitle.setStyleSheet("font-size: 14px; color: #b0b0b0; margin-bottom: 30px;")
-        layout.addWidget(subtitle)
+        self.subtitle_label = QLabel(self.lang_manager.get('dashboard.subtitle', 'Your all-in-one toolkit for productivity'))
+        self.subtitle_label.setStyleSheet("font-size: 14px; color: #b0b0b0; margin-bottom: 30px;")
+        layout.addWidget(self.subtitle_label)
         
         # Recent tools
-        recent_label = QLabel("Recent Tools")
-        recent_label.setStyleSheet("font-size: 18px; font-weight: bold; color: white; margin-top: 20px;")
-        layout.addWidget(recent_label)
+        self.recent_label = QLabel(self.lang_manager.get('dashboard.recent', 'Recent Tools'))
+        self.recent_label.setStyleSheet("font-size: 18px; font-weight: bold; color: white; margin-top: 20px;")
+        layout.addWidget(self.recent_label)
         
         recent_tools = self.data_manager.get_recent_tools()[:3]
         
@@ -202,11 +230,17 @@ class Dashboard(QWidget):
                     card = self.create_tool_card(tool_id, tool_info)
                     layout.addWidget(card)
         else:
-            no_tools = QLabel("No recent tools. Browse tools from sidebar!")
+            no_tools = QLabel(self.lang_manager.get('dashboard.no_recent', 'No recent tools. Browse tools from sidebar!'))
             no_tools.setStyleSheet("color: #b0b0b0; padding: 20px;")
             layout.addWidget(no_tools)
         
         layout.addStretch()
+    
+    def refresh_labels(self):
+        """Refresh all labels with new language"""
+        self.welcome_label.setText(self.lang_manager.get('dashboard.welcome', 'Welcome to Tools Helper! 👋'))
+        self.subtitle_label.setText(self.lang_manager.get('dashboard.subtitle', 'Your all-in-one toolkit for productivity'))
+        self.recent_label.setText(self.lang_manager.get('dashboard.recent', 'Recent Tools'))
     
     def create_tool_card(self, tool_id, tool_info):
         card = QFrame()
@@ -225,7 +259,7 @@ class Dashboard(QWidget):
         label.setStyleSheet("font-size: 14px; color: white;")
         layout.addWidget(label, 1)
         
-        open_btn = QPushButton("Open")
+        open_btn = QPushButton(self.lang_manager.get('dashboard.open', 'Open'))
         open_btn.setStyleSheet("""
             QPushButton {
                 background-color: #1f6aa5;
@@ -255,7 +289,9 @@ class ToolsHelperApp(QMainWindow):
         
         self.tool_manager = get_tool_manager()
         self.data_manager = DataManager()
+        self.lang_manager = get_language_manager()
         
+        self.current_page_name = "dashboard"
         self.setup_ui()
     
     def setup_ui(self):
@@ -281,7 +317,20 @@ class ToolsHelperApp(QMainWindow):
         # Show dashboard
         self.show_page("dashboard")
     
+    def refresh_all_labels(self):
+        """Refresh all labels in the entire app"""
+        # Refresh sidebar
+        self.sidebar.refresh_labels()
+        
+        # Refresh current page
+        current_widget = self.content_stack.currentWidget()
+        if current_widget and hasattr(current_widget, 'refresh_labels'):
+            current_widget.refresh_labels()
+    
     def show_page(self, page_name):
+        # Store current page
+        self.current_page_name = page_name
+        
         # Clear current content
         while self.content_stack.count() > 0:
             widget = self.content_stack.widget(0)
@@ -295,6 +344,11 @@ class ToolsHelperApp(QMainWindow):
                 self.content_stack.addWidget(tool_instance)
                 self.data_manager.add_recent_tool(page_name)
                 return
+        elif page_name == "settings":
+            settings = SettingsPage()
+            settings.settingsChanged.connect(self.refresh_all_labels)
+            self.content_stack.addWidget(settings)
+            return
         
         # Built-in pages
         if page_name == "dashboard":
@@ -313,7 +367,7 @@ class ToolsHelperApp(QMainWindow):
         title.setStyleSheet("font-size: 32px; font-weight: bold; color: white;")
         layout.addWidget(title, alignment=Qt.AlignmentFlag.AlignCenter)
         
-        msg = QLabel("This page is under construction")
+        msg = QLabel(self.lang_manager.get('common.under_construction', 'This page is under construction'))
         msg.setStyleSheet("font-size: 16px; color: #b0b0b0; margin-top: 10px;")
         layout.addWidget(msg, alignment=Qt.AlignmentFlag.AlignCenter)
         
