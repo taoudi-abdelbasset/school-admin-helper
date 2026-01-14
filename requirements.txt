@@ -1,5 +1,7 @@
-customtkinter
-Pillow
-pandas
-reportlab
-openpyxl
+# customtkinter
+# Pillow
+# pandas
+# reportlab
+# openpyxl
+PyMuPDF
+PyQt6

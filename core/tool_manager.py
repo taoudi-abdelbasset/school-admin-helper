@@ -1,8 +1,6 @@
 """
-Tool Manager - Automatic Tool Discovery and Loading
+Tool Manager - PyQt6 Version
 Place this in: core/tool_manager.py
-
-This automatically discovers and loads all tools from the tools/ directory!
 """
 import os
 import importlib
@@ -13,7 +11,7 @@ from pathlib import Path
 class ToolManager:
     """
     Automatically discovers and manages tools
-    Just drop a tool file in tools/ folder and it's automatically available!
+    Now supports PyQt6!
     """
     
     def __init__(self):
@@ -24,9 +22,7 @@ class ToolManager:
     def discover_tools(self):
         """
         Automatically discover all tools in the tools/ directory
-        No manual registration needed!
         """
-        # Get the tools directory
         base_dir = Path(__file__).parent.parent
         tools_dir = base_dir / "tools"
         
@@ -34,10 +30,10 @@ class ToolManager:
             print("⚠️ Tools directory not found")
             return
         
-        # Find all Python files in tools/ (except __init__ and base_tool)
+        # Find all Python files in tools/
         tool_files = [
             f.stem for f in tools_dir.glob("*.py")
-            if f.stem not in ["__init__", "base_tool", "__pycache__"]
+            if f.stem not in ["__init__", "base_tool", "base_tool_pyqt6", "__pycache__"]
         ]
         
         print(f"🔍 Scanning for tools... Found {len(tool_files)} files")
@@ -45,14 +41,12 @@ class ToolManager:
         # Import and register each tool
         for tool_file in tool_files:
             try:
-                # Import the module
                 module = importlib.import_module(f"tools.{tool_file}")
                 
-                # Find all classes in the module that are tools
+                # Find all classes that are tools
                 for name, obj in inspect.getmembers(module, inspect.isclass):
-                    # Check if it's a tool (has TOOL_NAME attribute and not the base class)
-                    if hasattr(obj, 'TOOL_NAME') and name != 'BaseTool':
-                        tool_id = tool_file  # Use filename as tool ID
+                    if hasattr(obj, 'TOOL_NAME') and name not in ['BaseTool', 'BaseToolPyQt6']:
+                        tool_id = tool_file
                         
                         self.tools[tool_id] = {
                             "name": obj.TOOL_NAME,
@@ -64,10 +58,12 @@ class ToolManager:
                         }
                         
                         print(f"✅ Loaded: {obj.TOOL_ICON} {obj.TOOL_NAME}")
-                        break  # Only one tool per file
+                        break
                         
             except Exception as e:
                 print(f"❌ Failed to load {tool_file}: {e}")
+                import traceback
+                traceback.print_exc()
     
     def get_tool(self, tool_id):
         """Get tool info by ID"""
@@ -91,8 +87,8 @@ class ToolManager:
             categories.add(tool["category"])
         return sorted(list(categories))
     
-    def create_tool_instance(self, tool_id, parent):
-        """Create an instance of a tool"""
+    def create_tool_instance_pyqt6(self, tool_id, parent=None):
+        """Create PyQt6 instance of a tool"""
         if tool_id not in self.tools:
             return None
         
@@ -100,7 +96,7 @@ class ToolManager:
         return tool_class(parent)
     
     def reload_tools(self):
-        """Reload all tools (useful for development)"""
+        """Reload all tools"""
         self.tools.clear()
         self.tool_instances.clear()
         self.discover_tools()

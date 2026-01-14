@@ -1,6 +1,7 @@
 """
 Tools Package
+IMPORTANT: Don't import PyQt6 widgets here - only import CustomTkinter tools
 """
-from tools.pdf_generator import PDFGeneratorTool
 
-__all__ = ['PDFGeneratorTool']
+# Only list tool module names, don't import them
+__all__ = ['pdf_generator']

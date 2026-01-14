@@ -4,6 +4,6 @@
 **/**.test**
 /data/**
 .env
-./push.sh
+push.sh
 
 **/**__pycache__
