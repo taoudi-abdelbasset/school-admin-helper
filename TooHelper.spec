@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 import os
+import sys
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
@@ -17,7 +18,7 @@ hiddenimports = [
     'PyQt6.QtCore',
     'PyQt6.QtGui',
     'PyQt6.QtWidgets',
-    'fitz',
+    'fitz',  # PyMuPDF
     'openpyxl',
     'qtawesome',
 ]
@@ -81,7 +82,7 @@ coll = COLLECT(
     name='TooHelper',
 )
 
-if sys.platform == 'darwin':
+if sys.platform.startswith('darwin'):
     app = BUNDLE(
         coll,
         name='TooHelper.app',
