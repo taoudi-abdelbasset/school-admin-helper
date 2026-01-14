@@ -1,0 +1,80 @@
+{
+  "dark": {
+    "name": "Dark",
+    "window": "#1a1a1a",
+    "window_text": "#ffffff",
+    "base": "#242424",
+    "alternate_base": "#2b2b2b",
+    "button": "#2b2b2b",
+    "button_text": "#ffffff",
+    "highlight": "#1f6aa5",
+    "highlighted_text": "#ffffff",
+    "sidebar": "#2b2b2b",
+    "border": "#3a3a3a"
+  },
+  "light": {
+    "name": "Light",
+    "window": "#f5f5f5",
+    "window_text": "#000000",
+    "base": "#ffffff",
+    "alternate_base": "#f0f0f0",
+    "button": "#e0e0e0",
+    "button_text": "#000000",
+    "highlight": "#1f6aa5",
+    "highlighted_text": "#ffffff",
+    "sidebar": "#e8e8e8",
+    "border": "#d0d0d0"
+  },
+  "vscode": {
+    "name": "VS Code",
+    "window": "#1e1e1e",
+    "window_text": "#cccccc",
+    "base": "#252526",
+    "alternate_base": "#2d2d30",
+    "button": "#2d2d30",
+    "button_text": "#cccccc",
+    "highlight": "#0e639c",
+    "highlighted_text": "#ffffff",
+    "sidebar": "#252526",
+    "border": "#3e3e42"
+  },
+  "saudi_green": {
+    "name": "Saudi Green",
+    "window": "#1a3a1a",
+    "window_text": "#e8f5e8",
+    "base": "#244024",
+    "alternate_base": "#2b4a2b",
+    "button": "#2b4a2b",
+    "button_text": "#e8f5e8",
+    "highlight": "#4a9d4a",
+    "highlighted_text": "#ffffff",
+    "sidebar": "#2b4a2b",
+    "border": "#3a5a3a"
+  },
+  "blue_ocean": {
+    "name": "Blue Ocean",
+    "window": "#0f1c2e",
+    "window_text": "#e3f2fd",
+    "base": "#1a2942",
+    "alternate_base": "#243447",
+    "button": "#243447",
+    "button_text": "#e3f2fd",
+    "highlight": "#2196f3",
+    "highlighted_text": "#ffffff",
+    "sidebar": "#1e2d3d",
+    "border": "#2d4a5c"
+  },
+  "purple_dream": {
+    "name": "Purple Dream",
+    "window": "#1a0a2e",
+    "window_text": "#f3e5f5",
+    "base": "#2d1b4e",
+    "alternate_base": "#3a2558",
+    "button": "#3a2558",
+    "button_text": "#f3e5f5",
+    "highlight": "#9c27b0",
+    "highlighted_text": "#ffffff",
+    "sidebar": "#2a1a45",
+    "border": "#4a3570"
+  }
+}

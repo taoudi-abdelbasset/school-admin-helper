@@ -33,6 +33,7 @@ except ImportError:
     fitz = None
 
 from config.language_manager import get_language_manager  # Add this import
+from ui.styles import COLORS
 
 
 class ResizeHandle(QGraphicsEllipseItem):
@@ -433,11 +434,11 @@ class PDFTemplateEditor(QWidget):
         """Left data nodes panel"""
         panel = QFrame()
         panel.setFixedWidth(240)
-        panel.setStyleSheet("""
-            QFrame {
-                background-color: #242424;
-                border-right: 1px solid #2d2d2d;
-            }
+        panel.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['sidebar_bg']};
+                border-right: 1px solid {COLORS['border']};
+            }}
         """)
         
         layout = QVBoxLayout(panel)
@@ -446,11 +447,11 @@ class PDFTemplateEditor(QWidget):
         
         # Title
         title = QLabel(f"📊 {self.lang_manager.get('pdf_generator.data_nodes', 'Data Nodes')}")
-        title.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
+        title.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 14px; font-weight: bold;")
         layout.addWidget(title)
         
         subtitle = QLabel(self.lang_manager.get('pdf_generator.data_nodes_desc', 'One data node = multiple fields'))
-        subtitle.setStyleSheet("color: #808080; font-size: 10px; margin-bottom: 5px;")
+        subtitle.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 10px; margin-bottom: 5px;")
         layout.addWidget(subtitle)
         
         # Add data node input
@@ -461,34 +462,34 @@ class PDFTemplateEditor(QWidget):
         
         self.node_input = QLineEdit()
         self.node_input.setPlaceholderText(self.lang_manager.get('pdf_generator.node_placeholder', 'e.g., firstname'))
-        self.node_input.setStyleSheet("""
-            QLineEdit {
+        self.node_input.setStyleSheet(f"""
+            QLineEdit {{
                 padding: 8px;
-                background: #2d2d2d;
-                border: 1px solid #404040;
+                background: {COLORS['card_bg']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 4px;
-                color: white;
-            }
-            QLineEdit:focus {
-                border: 1px solid #1f6aa5;
-            }
+                color: {COLORS['text_primary']};
+            }}
+            QLineEdit:focus {{
+                border: 1px solid {COLORS['primary']};
+            }}
         """)
         self.node_input.returnPressed.connect(self.add_data_node)
         input_layout.addWidget(self.node_input)
         
         add_btn = QPushButton("➕")
         add_btn.setFixedSize(36, 36)
-        add_btn.setStyleSheet("""
-            QPushButton {
-                background: #1f6aa5;
-                color: white;
+        add_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {COLORS['primary']};
+                color: {COLORS['text_primary']};
                 border: none;
                 border-radius: 4px;
                 font-size: 16px;
-            }
-            QPushButton:hover {
-                background: #144870;
-            }
+            }}
+            QPushButton:hover {{
+                background: {COLORS['secondary']};
+            }}
         """)
         add_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         add_btn.clicked.connect(self.add_data_node)
@@ -521,12 +522,12 @@ class PDFTemplateEditor(QWidget):
         
         # Toolbar
         toolbar = QFrame()
-        toolbar.setStyleSheet("background: #2b2b2b; border-bottom: 1px solid #3a3a3a;")
+        toolbar.setStyleSheet(f"background: {COLORS['content_bg']}; border-bottom: 1px solid {COLORS['border']};")
         toolbar_layout = QHBoxLayout(toolbar)
         toolbar_layout.setContentsMargins(15, 10, 15, 10)
         
         hint = QLabel(self.lang_manager.get('pdf_generator.drag_hint', '💡 Drag to move • Drag handles to resize'))
-        hint.setStyleSheet("color: #b0b0b0; font-size: 11px;")
+        hint.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11px;")
         toolbar_layout.addWidget(hint)
         
         toolbar_layout.addStretch()
@@ -549,35 +550,35 @@ class PDFTemplateEditor(QWidget):
         toolbar_layout.addSpacing(20)
         
         back_btn = QPushButton(f"← {self.lang_manager.get('pdf_generator.back', 'Back')}")
-        back_btn.setStyleSheet("""
-            QPushButton {
-                background: #404040;
-                color: white;
+        back_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {COLORS['card_bg']};
+                color: {COLORS['text_primary']};
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
-            }
-            QPushButton:hover {
-                background: #505050;
-            }
+            }}
+            QPushButton:hover {{
+                background: {COLORS['border']};
+            }}
         """)
         back_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         back_btn.clicked.connect(lambda: self.backRequested.emit())
         toolbar_layout.addWidget(back_btn)
         
         save_btn = QPushButton(f"💾 {self.lang_manager.get('pdf_generator.save', 'Save')}")
-        save_btn.setStyleSheet("""
-            QPushButton {
-                background: #2fa572;
-                color: white;
+        save_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {COLORS['success']};
+                color: {COLORS['text_primary']};
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
                 font-weight: bold;
-            }
-            QPushButton:hover {
+            }}
+            QPushButton:hover {{
                 background: #267d5a;
-            }
+            }}
         """)
         save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         save_btn.clicked.connect(self.save_template)
@@ -585,18 +586,18 @@ class PDFTemplateEditor(QWidget):
         
         # Data Table button
         data_btn = QPushButton(f"📊 {self.lang_manager.get('pdf_generator.data_table', 'Data Table')}")
-        data_btn.setStyleSheet("""
-            QPushButton {
-                background: #6b46c1;
-                color: white;
+        data_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {COLORS['secondary']};
+                color: {COLORS['text_primary']};
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
                 font-weight: bold;
-            }
-            QPushButton:hover {
-                background: #553c9a;
-            }
+            }}
+            QPushButton:hover {{
+                background: {COLORS['primary']};
+            }}
         """)
         data_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         data_btn.clicked.connect(self.open_data_section)
@@ -608,35 +609,35 @@ class PDFTemplateEditor(QWidget):
         return widget
     
     def _get_toolbar_btn_style(self):
-        return """
-            QPushButton {
+        return f"""
+            QPushButton {{
                 background: transparent;
-                color: #e0e0e0;
+                color: {COLORS['text_secondary']};
                 border: none;
                 padding: 6px 12px;
                 border-radius: 4px;
-            }
-            QPushButton:hover {
-                background: #404040;
-            }
+            }}
+            QPushButton:hover {{
+                background: {COLORS['border']};
+            }}
         """
 
     def create_right_panel(self):
         """Right properties panel"""
         panel = QFrame()
         panel.setFixedWidth(280)
-        panel.setStyleSheet("""
-            QFrame {
-                background-color: #1e1e1e;
-                border-left: 1px solid #2d2d2d;
-            }
+        panel.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['sidebar_bg']};
+                border-left: 1px solid {COLORS['border']};
+            }}
         """)
         
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(15, 15, 15, 15)
         
         title = QLabel(f"⚙️ {self.lang_manager.get('pdf_generator.field_properties', 'Field Properties')}")
-        title.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
+        title.setStyleSheet(f"color: {COLORS['text_primary']}; font-size: 14px; font-weight: bold;")
         layout.addWidget(title)
         
         scroll = QScrollArea()
@@ -660,7 +661,7 @@ class PDFTemplateEditor(QWidget):
         """Create property inputs"""
         # Data node name
         self.prop_data_node = QLabel("No field selected")
-        self.prop_data_node.setStyleSheet("color: #2196f3; font-size: 16px; font-weight: bold;")
+        self.prop_data_node.setStyleSheet(f"color: {COLORS['primary']}; font-size: 16px; font-weight: bold;")
         self.props_layout.addWidget(self.prop_data_node)
         
         # Create container for all field properties
@@ -821,21 +822,21 @@ class PDFTemplateEditor(QWidget):
     def _add_section_label_to_container(self, text):
         """Add section label to container"""
         label = QLabel(text)
-        label.setStyleSheet("color: #e0e0e0; font-weight: bold; margin-top: 10px;")
+        label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: bold; margin-top: 10px;")
         self.props_container_layout.addWidget(label)
     
     def _get_input_style(self):
-        return """
-            QSpinBox, QComboBox {
+        return f"""
+            QSpinBox, QComboBox {{
                 padding: 6px;
-                background: #2d2d2d;
-                border: 1px solid #404040;
+                background: {COLORS['card_bg']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 4px;
-                color: white;
-            }
-            QSpinBox:focus, QComboBox:focus {
-                border: 1px solid #1f6aa5;
-            }
+                color: {COLORS['text_primary']};
+            }}
+            QSpinBox:focus, QComboBox:focus {{
+                border: 1px solid {COLORS['primary']};
+            }}
         """
     
     def set_properties_enabled(self, enabled):

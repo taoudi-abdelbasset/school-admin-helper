@@ -9,6 +9,7 @@ from core.app_pyqt6 import ToolsHelperApp
 
 
 from config.theme_manager import ThemeManager
+from config.theme_stylesheet import get_global_stylesheet
 from config.language_manager import get_language_manager
 from core.data_manager import DataManager
 
@@ -28,9 +29,18 @@ def main():
     saved_lang = data_manager.get_setting("language", "en")
     lang_manager.load_language(saved_lang)
     
-    # Apply saved theme
+    # Apply saved theme - both palette AND global stylesheet
     saved_theme = data_manager.get_setting("theme", "dark")
     ThemeManager.apply_theme(saved_theme)
+    
+    # Apply global stylesheet for all widgets
+    app.setStyleSheet(get_global_stylesheet(saved_theme))
+    
+    # Create and show main window
+    window = ToolsHelperApp()
+    window.show()
+    
+    sys.exit(app.exec())
     
     # Create and show main window
     window = ToolsHelperApp()

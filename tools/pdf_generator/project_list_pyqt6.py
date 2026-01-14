@@ -14,6 +14,7 @@ import os
 import base64
 
 from config.language_manager import get_language_manager
+from ui.styles import COLORS
 
 
 class ProjectModal(QDialog):
@@ -45,51 +46,51 @@ class ProjectModal(QDialog):
         # Title
         icon = "📄" if self.mode == "create" else "✏️"
         title = QLabel(f"{icon} {self.windowTitle()}")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
+        title.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {COLORS['text_primary']};")
         layout.addWidget(title)
         
         # Project Name
         name_label = QLabel(f"{self.lang_manager.get('pdf_generator.project_name', 'Project Name')} *")
-        name_label.setStyleSheet("font-weight: bold; color: #e0e0e0; font-size: 12px;")
+        name_label.setStyleSheet(f"font-weight: bold; color: {COLORS['text_secondary']}; font-size: 12px;")
         layout.addWidget(name_label)
         
         self.name_entry = QLineEdit()
         self.name_entry.setPlaceholderText("e.g., Student ID Cards")
-        self.name_entry.setStyleSheet("""
-            QLineEdit {
+        self.name_entry.setStyleSheet(f"""
+            QLineEdit {{
                 padding: 8px 12px;
-                background-color: #2d2d2d;
-                border: 1px solid #404040;
+                background-color: {COLORS['card_bg']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 4px;
-                color: white;
+                color: {COLORS['text_primary']};
                 font-size: 13px;
-            }
-            QLineEdit:focus {
-                border: 1px solid #1f6aa5;
-            }
+            }}
+            QLineEdit:focus {{
+                border: 1px solid {COLORS['primary']};
+            }}
         """)
         layout.addWidget(self.name_entry)
         
         # Description
         desc_label = QLabel(self.lang_manager.get('pdf_generator.description', 'Description'))
-        desc_label.setStyleSheet("font-weight: bold; color: #e0e0e0; font-size: 12px;")
+        desc_label.setStyleSheet(f"font-weight: bold; color: {COLORS['text_secondary']}; font-size: 12px;")
         layout.addWidget(desc_label)
         
         self.desc_textbox = QTextEdit()
         self.desc_textbox.setPlaceholderText("Optional description...")
         self.desc_textbox.setMaximumHeight(70)
-        self.desc_textbox.setStyleSheet("""
-            QTextEdit {
+        self.desc_textbox.setStyleSheet(f"""
+            QTextEdit {{
                 padding: 8px 12px;
-                background-color: #2d2d2d;
-                border: 1px solid #404040;
+                background-color: {COLORS['card_bg']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 4px;
-                color: white;
+                color: {COLORS['text_primary']};
                 font-size: 12px;
-            }
-            QTextEdit:focus {
-                border: 1px solid #1f6aa5;
-            }
+            }}
+            QTextEdit:focus {{
+                border: 1px solid {COLORS['primary']};
+            }}
         """)
         layout.addWidget(self.desc_textbox)
         
@@ -99,34 +100,34 @@ class ProjectModal(QDialog):
         layout.addWidget(pdf_label)
         
         pdf_frame = QFrame()
-        pdf_frame.setStyleSheet("""
-            QFrame {
-                background-color: #2d2d2d;
-                border: 1px solid #404040;
+        pdf_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['card_bg']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 4px;
                 padding: 8px;
-            }
+            }}
         """)
         pdf_layout = QHBoxLayout(pdf_frame)
         pdf_layout.setContentsMargins(8, 4, 8, 4)
         
         self.pdf_filename_label = QLabel(self.lang_manager.get('pdf_generator.no_file', 'No file selected'))
-        self.pdf_filename_label.setStyleSheet("color: #808080; font-size: 12px;")
+        self.pdf_filename_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")
         pdf_layout.addWidget(self.pdf_filename_label, 1)
         
         select_pdf_btn = QPushButton(self.lang_manager.get('pdf_generator.browse', 'Browse...'))
-        select_pdf_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
+        select_pdf_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['border']};
+                color: {COLORS['text_primary']};
                 border: none;
                 padding: 6px 16px;
                 border-radius: 3px;
                 font-size: 12px;
-            }
-            QPushButton:hover {
-                background-color: #505050;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['card_bg']};
+            }}
         """)
         select_pdf_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         select_pdf_btn.clicked.connect(self.select_pdf_file)
@@ -270,35 +271,35 @@ class ProjectListSectionPyQt6(QWidget):
         
         # Header Bar
         header_bar = QFrame()
-        header_bar.setStyleSheet("""
-            QFrame {
-                background-color: #242424;
-                border-bottom: 1px solid #3a3a3a;
-            }
+        header_bar.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['sidebar_bg']};
+                border-bottom: 1px solid {COLORS['border']};
+            }}
         """)
         header_layout = QHBoxLayout(header_bar)
         header_layout.setContentsMargins(30, 20, 30, 20)
         
         title = QLabel(f"📂 {self.lang_manager.get('pdf_generator.projects', 'Projects')}")
-        title.setStyleSheet("font-size: 22px; font-weight: bold; color: white;")
+        title.setStyleSheet(f"font-size: 22px; font-weight: bold; color: {COLORS['text_primary']};")
         header_layout.addWidget(title)
         
         header_layout.addStretch()
         
         create_btn = QPushButton(f"➕ {self.lang_manager.get('pdf_generator.new_project', 'New Project')}")
-        create_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #1f6aa5;
-                color: white;
+        create_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['primary']};
+                color: {COLORS['text_primary']};
                 border: none;
                 padding: 10px 24px;
                 border-radius: 5px;
                 font-weight: bold;
                 font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #144870;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['secondary']};
+            }}
         """)
         create_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         create_btn.clicked.connect(self.open_create_modal)
@@ -310,7 +311,7 @@ class ProjectListSectionPyQt6(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setStyleSheet("background-color: #1a1a1a;")
+        scroll.setStyleSheet(f"background-color: {COLORS['content_bg']};")
         
         self.projects_container = QWidget()
         self.projects_layout = QVBoxLayout(self.projects_container)
@@ -350,12 +351,12 @@ class ProjectListSectionPyQt6(QWidget):
         empty_layout.addSpacing(20)
         
         title = QLabel(self.lang_manager.get('pdf_generator.no_projects', 'No Projects Yet'))
-        title.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
+        title.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {COLORS['text_primary']};")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(title)
         
         subtitle = QLabel(self.lang_manager.get('pdf_generator.no_projects_desc', 'Create your first PDF template project to get started'))
-        subtitle.setStyleSheet("font-size: 14px; color: #808080; margin-top: 8px;")
+        subtitle.setStyleSheet(f"font-size: 14px; color: {COLORS['text_secondary']}; margin-top: 8px;")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(subtitle)
         
@@ -370,16 +371,16 @@ class ProjectListSectionPyQt6(QWidget):
     def create_project_row(self, project):
         """Create a single project row"""
         row = QFrame()
-        row.setStyleSheet("""
-            QFrame {
-                background-color: #242424;
-                border: 1px solid #2d2d2d;
+        row.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['card_bg']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 6px;
-            }
-            QFrame:hover {
-                background-color: #2a2a2a;
-                border: 1px solid #3a3a3a;
-            }
+            }}
+            QFrame:hover {{
+                background-color: {COLORS['content_bg']};
+                border: 1px solid {COLORS['border']};
+            }}
         """)
         row.setMinimumHeight(80)
         row.setMaximumHeight(80)
@@ -390,7 +391,7 @@ class ProjectListSectionPyQt6(QWidget):
         
         # Icon
         icon_label = QLabel("📄")
-        icon_label.setStyleSheet("font-size: 32px;")
+        icon_label.setStyleSheet(f"font-size: 32px; color: {COLORS['text_primary']};")
         icon_label.setFixedSize(40, 40)
         layout.addWidget(icon_label)
         
@@ -402,7 +403,7 @@ class ProjectListSectionPyQt6(QWidget):
         
         # Name
         name_label = QLabel(project["name"])
-        name_label.setStyleSheet("font-size: 15px; font-weight: bold; color: white;")
+        name_label.setStyleSheet(f"font-size: 15px; font-weight: bold; color: {COLORS['text_primary']};")
         info_layout.addWidget(name_label)
         
         # Description + Date
@@ -412,7 +413,7 @@ class ProjectListSectionPyQt6(QWidget):
         
         meta_text = f"{desc_text} • Created {project['created_at']}"
         meta_label = QLabel(meta_text)
-        meta_label.setStyleSheet("font-size: 12px; color: #808080;")
+        meta_label.setStyleSheet(f"font-size: 12px; color: {COLORS['text_secondary']};")
         info_layout.addWidget(meta_label)
         
         layout.addWidget(info_widget, 1)
@@ -421,7 +422,7 @@ class ProjectListSectionPyQt6(QWidget):
         has_pdf = project.get("pdf_file_name") is not None
         pdf_indicator = QLabel("✓ PDF" if has_pdf else "⚠ No PDF")
         pdf_indicator.setStyleSheet(
-            f"font-size: 11px; color: {'#2fa572' if has_pdf else '#e6a800'}; font-weight: bold;"
+            f"font-size: 11px; color: {COLORS['success'] if has_pdf else COLORS['warning']}; font-weight: bold;"
         )
         layout.addWidget(pdf_indicator)
         
@@ -433,19 +434,19 @@ class ProjectListSectionPyQt6(QWidget):
         
         # Design button
         design_btn = QPushButton(f"🎨 {self.lang_manager.get('pdf_generator.design', 'Design')}")
-        design_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #1f6aa5;
-                color: white;
+        design_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['primary']};
+                color: {COLORS['text_primary']};
                 border: none;
                 padding: 8px 20px;
                 border-radius: 4px;
                 font-size: 13px;
                 font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #144870;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['secondary']};
+            }}
         """)
         design_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         design_btn.clicked.connect(lambda: self.on_open_project(project["id"]))
@@ -454,17 +455,17 @@ class ProjectListSectionPyQt6(QWidget):
         # Edit button
         edit_btn = QPushButton("✏️")
         edit_btn.setFixedSize(36, 36)
-        edit_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
+        edit_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['border']};
+                color: {COLORS['text_primary']};
                 border: none;
                 border-radius: 4px;
                 font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #505050;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['card_bg']};
+            }}
         """)
         edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         edit_btn.clicked.connect(lambda: self.open_edit_modal(project))
@@ -473,18 +474,18 @@ class ProjectListSectionPyQt6(QWidget):
         # Delete button
         delete_btn = QPushButton("🗑️")
         delete_btn.setFixedSize(36, 36)
-        delete_btn.setStyleSheet("""
-            QPushButton {
+        delete_btn.setStyleSheet(f"""
+            QPushButton {{
                 background-color: transparent;
-                color: #d32f2f;
-                border: 1px solid #d32f2f;
+                color: {COLORS['danger']};
+                border: 1px solid {COLORS['danger']};
                 border-radius: 4px;
                 font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #d32f2f;
-                color: white;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['danger']};
+                color: {COLORS['text_primary']};
+            }}
         """)
         delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         delete_btn.clicked.connect(lambda: self.confirm_delete(project))

@@ -25,7 +25,7 @@ class BaseToolPyQt6(QWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet("background-color: #1a1a1a;")
+        # Don't set hardcoded colors - let theme palette handle it
         
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)

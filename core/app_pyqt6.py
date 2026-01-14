@@ -28,26 +28,20 @@ class Sidebar(QFrame):
         self.current_button = None
         
         self.setFixedWidth(250)
+        # Don't set hardcoded background colors - let theme palette handle it
         self.setStyleSheet("""
-            QFrame {
-                background-color: #2b2b2b;
-                border-right: 1px solid #3a3a3a;
-            }
             QPushButton {
                 text-align: left;
                 padding: 12px 20px;
                 border: none;
                 background-color: transparent;
-                color: #b0b0b0;
                 font-size: 13px;
             }
             QPushButton:hover {
                 background-color: #1f6aa5;
-                color: white;
             }
             QPushButton[selected="true"] {
                 background-color: #1f6aa5;
-                color: white;
             }
         """)
         
@@ -64,15 +58,13 @@ class Sidebar(QFrame):
             padding: 20px;
             font-size: 18px;
             font-weight: bold;
-            color: white;
-            background-color: #2b2b2b;
         """)
         layout.addWidget(self.header_label)
         
         # Separator
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("background-color: #3a3a3a;")
+        # Don't set hardcoded color - use theme palette
         layout.addWidget(sep)
         
         # Main menu
@@ -209,7 +201,7 @@ class Dashboard(QWidget):
         
         # Welcome
         self.welcome_label = QLabel(self.lang_manager.get('dashboard.welcome', 'Welcome to Tools Helper! 👋'))
-        self.welcome_label.setStyleSheet("font-size: 28px; font-weight: bold; color: white;")
+        self.welcome_label.setStyleSheet("font-size: 28px; font-weight: bold;")
         layout.addWidget(self.welcome_label)
         
         self.subtitle_label = QLabel(self.lang_manager.get('dashboard.subtitle', 'Your all-in-one toolkit for productivity'))
@@ -218,7 +210,7 @@ class Dashboard(QWidget):
         
         # Recent tools
         self.recent_label = QLabel(self.lang_manager.get('dashboard.recent', 'Recent Tools'))
-        self.recent_label.setStyleSheet("font-size: 18px; font-weight: bold; color: white; margin-top: 20px;")
+        self.recent_label.setStyleSheet("font-size: 18px; font-weight: bold; margin-top: 20px;")
         layout.addWidget(self.recent_label)
         
         recent_tools = self.data_manager.get_recent_tools()[:3]
@@ -311,7 +303,7 @@ class ToolsHelperApp(QMainWindow):
         
         # Content area
         self.content_stack = QStackedWidget()
-        self.content_stack.setStyleSheet("background-color: #1a1a1a;")
+        # Don't set hardcoded background - let theme palette handle it
         layout.addWidget(self.content_stack, 1)
         
         # Show dashboard
@@ -364,7 +356,7 @@ class ToolsHelperApp(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         title = QLabel(f"📄 {page_name.title()}")
-        title.setStyleSheet("font-size: 32px; font-weight: bold; color: white;")
+        title.setStyleSheet("font-size: 32px; font-weight: bold;")
         layout.addWidget(title, alignment=Qt.AlignmentFlag.AlignCenter)
         
         msg = QLabel(self.lang_manager.get('common.under_construction', 'This page is under construction'))

@@ -37,6 +37,7 @@ except ImportError:
 from config.language_manager import get_language_manager
 from pdf_generator_engine import PDFGeneratorEngine
 from pdf_generation_dialog import PDFGenerationDialog
+from ui.styles import COLORS
 
 class RowDialog(QDialog):
     """Dialog for adding/editing a data row"""
@@ -67,7 +68,7 @@ class RowDialog(QDialog):
         
         # Title
         title = QLabel(self.windowTitle())
-        title.setStyleSheet("font-size: 18px; font-weight: bold; color: white;")
+        title.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {COLORS['text_primary']};")
         layout.addWidget(title)
         
         # Scroll area
@@ -83,24 +84,24 @@ class RowDialog(QDialog):
         
         for node in self.data_nodes:
             label = QLabel(f"{node}:")
-            label.setStyleSheet("color: #e0e0e0; font-weight: 600; min-width: 140px;")
+            label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 600; min-width: 140px;")
             
             input_field = QLineEdit()
             input_field.setPlaceholderText(self.lang_manager.get('pdf_generator.enter_value', 'Enter value for') + f" '{node}'")
             input_field.setText(self.row_data.get(node, ""))
-            input_field.setStyleSheet("""
-                QLineEdit {
+            input_field.setStyleSheet(f"""
+                QLineEdit {{
                     padding: 8px 12px;
-                    background: #2a2a2a;
-                    border: 1px solid #404040;
+                    background: {COLORS['card_bg']};
+                    border: 1px solid {COLORS['border']};
                     border-radius: 6px;
-                    color: white;
+                    color: {COLORS['text_primary']};
                     font-size: 13px;
-                }
-                QLineEdit:focus {
-                    border: 1px solid #3b82f6;
-                    background: #2f2f2f;
-                }
+                }}
+                QLineEdit:focus {{
+                    border: 1px solid {COLORS['primary']};
+                    background: {COLORS['card_bg']};
+                }}
             """)
             
             form_layout.addRow(label, input_field)
@@ -116,36 +117,36 @@ class RowDialog(QDialog):
         
         cancel_btn = QPushButton(self.lang_manager.get('common.cancel', 'Cancel'))
         cancel_btn.setFixedWidth(100)
-        cancel_btn.setStyleSheet("""
-            QPushButton {
+        cancel_btn.setStyleSheet(f"""
+            QPushButton {{
                 background: transparent;
-                color: #b0b0b0;
-                border: 1px solid #505050;
+                color: {COLORS['text_secondary']};
+                border: 1px solid {COLORS['border']};
                 padding: 8px;
                 border-radius: 6px;
-            }
-            QPushButton:hover {
-                background: #383838;
-                color: white;
-            }
+            }}
+            QPushButton:hover {{
+                background: {COLORS['card_bg']};
+                color: {COLORS['text_primary']};
+            }}
         """)
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
 
         save_btn = QPushButton(self.lang_manager.get('common.save', 'Save') if self.row_data else self.lang_manager.get('pdf_generator.add_row', 'Add Row'))
         save_btn.setFixedWidth(100)
-        save_btn.setStyleSheet("""
-            QPushButton {
-                background: #3b82f6;
-                color: white;
+        save_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {COLORS['primary']};
+                color: {COLORS['text_primary']};
                 border: none;
                 padding: 8px;
                 border-radius: 6px;
                 font-weight: bold;
-            }
-            QPushButton:hover {
-                background: #2563eb;
-            }
+            }}
+            QPushButton:hover {{
+                background: {COLORS['secondary']};
+            }}
         """)
         save_btn.clicked.connect(self.accept)
         btn_layout.addWidget(save_btn)
@@ -186,12 +187,12 @@ class DataSectionPyQt6(QWidget):
         
         # Header
         header = QFrame()
-        header.setStyleSheet("background: #1f1f1f; border-bottom: 1px solid #333;")
+        header.setStyleSheet(f"background: {COLORS['sidebar_bg']}; border-bottom: 1px solid {COLORS['border']};")
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(30, 18, 30, 18)
         
         title = QLabel(f"{self.lang_manager.get('pdf_generator.data_table', 'Data Table')} — {self.project['name']}")
-        title.setStyleSheet("font-size: 19px; font-weight: bold; color: white;")
+        title.setStyleSheet(f"font-size: 19px; font-weight: bold; color: {COLORS['text_primary']};")
         header_layout.addWidget(title)
         header_layout.addStretch()
         
@@ -200,18 +201,18 @@ class DataSectionPyQt6(QWidget):
         if qta:
             back_btn.setIcon(qta.icon('fa5s.arrow-left', color='white'))
         back_btn.setFixedHeight(36)
-        back_btn.setStyleSheet("""
-            QPushButton {
-                background: #374151;
-                color: white;
+        back_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {COLORS['card_bg']};
+                color: {COLORS['text_primary']};
                 border: none;
                 padding: 0 16px;
                 border-radius: 6px;
                 font-weight: 500;
-            }
-            QPushButton:hover {
-                background: #4b5563;
-            }
+            }}
+            QPushButton:hover {{
+                background: {COLORS['border']};
+            }}
         """)
         back_btn.clicked.connect(lambda: self.backRequested.emit())
         header_layout.addWidget(back_btn)
@@ -220,7 +221,7 @@ class DataSectionPyQt6(QWidget):
         
         # Toolbar
         toolbar = QFrame()
-        toolbar.setStyleSheet("background: #171717; border-bottom: 1px solid #2a2a2a;")
+        toolbar.setStyleSheet(f"background: {COLORS['content_bg']}; border-bottom: 1px solid {COLORS['border']};")
         toolbar_layout = QHBoxLayout(toolbar)
         toolbar_layout.setContentsMargins(30, 14, 30, 14)
         toolbar_layout.setSpacing(16)
@@ -229,26 +230,26 @@ class DataSectionPyQt6(QWidget):
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText(self.lang_manager.get('pdf_generator.search', '🔍 Search in table...'))
         self.search_input.setFixedWidth(280)
-        self.search_input.setStyleSheet("""
-            QLineEdit {
+        self.search_input.setStyleSheet(f"""
+            QLineEdit {{
                 padding: 8px 12px;
-                background: #2a2a2a;
-                border: 1px solid #404040;
+                background: {COLORS['card_bg']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 6px;
-                color: white;
+                color: {COLORS['text_primary']};
                 font-size: 13px;
-            }
-            QLineEdit:focus {
-                border: 1px solid #3b82f6;
-                background: #2f2f2f;
-            }
+            }}
+            QLineEdit:focus {{
+                border: 1px solid {COLORS['primary']};
+                background: {COLORS['card_bg']};
+            }}
         """)
         self.search_input.textChanged.connect(self.search_table)
         toolbar_layout.addWidget(self.search_input)
         
         # Row count info
         self.row_count_label = QLabel(f"{len(self.csv_data)} {self.lang_manager.get('pdf_generator.rows', 'rows')}")
-        self.row_count_label.setStyleSheet("color: #9ca3af; font-size: 13px; margin-left: 8px;")
+        self.row_count_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 13px; margin-left: 8px;")
         toolbar_layout.addWidget(self.row_count_label)
         
         toolbar_layout.addStretch()
@@ -302,28 +303,28 @@ class DataSectionPyQt6(QWidget):
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QTableWidget.SelectionMode.MultiSelection)
         
-        self.table.setStyleSheet("""
-            QTableWidget {
-                background: #1a1a1a;
-                border: 1px solid #2d2d2d;
+        self.table.setStyleSheet(f"""
+            QTableWidget {{
+                background: {COLORS['content_bg']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 8px;
-                color: #e5e7eb;
-                gridline-color: #252525;
-            }
-            QTableWidget::item {
+                color: {COLORS['text_primary']};
+                gridline-color: {COLORS['border']};
+            }}
+            QTableWidget::item {{
                 padding: 8px;
-            }
-            QTableWidget::item:selected {
-                background: #1e40af;
-            }
-            QHeaderView::section {
-                background: #222;
-                color: #e5e7eb;
+            }}
+            QTableWidget::item:selected {{
+                background: {COLORS['primary']};
+            }}
+            QHeaderView::section {{
+                background: {COLORS['card_bg']};
+                color: {COLORS['text_primary']};
                 padding: 10px;
                 border: none;
-                border-bottom: 2px solid #3b82f6;
+                border-bottom: 2px solid {COLORS['primary']};
                 font-weight: bold;
-            }
+            }}
         """)
         
         if self.data_nodes:
@@ -344,7 +345,7 @@ class DataSectionPyQt6(QWidget):
         table_layout.addWidget(self.table)
         
         self.stats_label = QLabel()
-        self.stats_label.setStyleSheet("color: #9ca3af; font-size: 13px; padding-top: 12px;")
+        self.stats_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 13px; padding-top: 12px;")
         table_layout.addWidget(self.stats_label)
         
         layout.addWidget(table_container)
@@ -375,7 +376,7 @@ class DataSectionPyQt6(QWidget):
         btn.setStyleSheet(f"""
             QPushButton {{
                 background: {normal};
-                color: white;
+                color: {COLORS['text_primary']};
                 border: none;
                 padding: 8px 14px;
                 border-radius: 6px;
@@ -391,7 +392,7 @@ class DataSectionPyQt6(QWidget):
     def _create_v_separator(self):
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.VLine)
-        sep.setStyleSheet("background: #333; margin: 0 8px;")
+        sep.setStyleSheet(f"background: {COLORS['border']}; margin: 0 8px;")
         sep.setFixedWidth(1)
         return sep
 
@@ -435,16 +436,16 @@ class DataSectionPyQt6(QWidget):
             else:
                 edit_btn.setText("Edit")
             edit_btn.setFixedSize(32, 28)
-            edit_btn.setStyleSheet("""
-                QPushButton {
-                    background: #2563eb;
-                    color: white;
+            edit_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: {COLORS['primary']};
+                    color: {COLORS['text_primary']};
                     border: none;
                     border-radius: 4px;
-                }
-                QPushButton:hover {
-                    background: #1d4ed8;
-                }
+                }}
+                QPushButton:hover {{
+                    background: {COLORS['secondary']};
+                }}
             """)
             edit_btn.setToolTip("Edit this row")
             edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -457,16 +458,16 @@ class DataSectionPyQt6(QWidget):
             else:
                 delete_btn.setText("Del")
             delete_btn.setFixedSize(32, 28)
-            delete_btn.setStyleSheet("""
-                QPushButton {
-                    background: #dc2626;
-                    color: white;
+            delete_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: {COLORS['danger']};
+                    color: {COLORS['text_primary']};
                     border: none;
                     border-radius: 4px;
-                }
-                QPushButton:hover {
+                }}
+                QPushButton:hover {{
                     background: #b91c1c;
-                }
+                }}
             """)
             delete_btn.setToolTip("Delete this row")
             delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)

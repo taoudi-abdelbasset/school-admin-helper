@@ -1,20 +1,21 @@
 """
-Settings Page - FIXED refresh_labels bug
-Replace ui/settings_page.py with this
+Settings Page - Clean separation of themes and languages
+Replace ui/settings_page.py
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QComboBox, QPushButton, QFrame, QMessageBox
+    QComboBox, QPushButton, QFrame, QMessageBox, QApplication
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from config.language_manager import get_language_manager
 from config.theme_manager import ThemeManager
+from config.theme_stylesheet import get_global_stylesheet
 from core.data_manager import DataManager
 
 
 class SettingsPage(QWidget):
-    """Simplified settings page with dropdowns"""
+    """Settings page with separate theme and language selection"""
     
     settingsChanged = pyqtSignal()
     
@@ -25,7 +26,6 @@ class SettingsPage(QWidget):
         self.setup_ui()
     
     def setup_ui(self):
-        # Clear existing layout if any
         if self.layout():
             QWidget().setLayout(self.layout())
         
@@ -35,62 +35,49 @@ class SettingsPage(QWidget):
         
         # Title
         self.title_label = QLabel(self.lang_manager.get('settings.title', 'Settings'))
-        self.title_label.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
+        self.title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
         layout.addWidget(self.title_label)
         
         # Theme section
         self.theme_label = QLabel(self.lang_manager.get('settings.appearance', 'Theme'))
-        self.theme_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #e0e0e0;")
+        self.theme_label.setStyleSheet("font-size: 14px; font-weight: bold;")
         layout.addWidget(self.theme_label)
         
+        # Theme combo - dynamically loaded from themes.json
         self.theme_combo = QComboBox()
-        self.theme_combo.addItems([
-            self.lang_manager.get('settings.dark', 'Dark'),
-            self.lang_manager.get('settings.light', 'Light'),
-            self.lang_manager.get('settings.vscode', 'VS Code')
-        ])
-        self.theme_combo.setStyleSheet("""
-            QComboBox {
-                padding: 8px;
-                background: #2d2d2d;
-                border: 1px solid #404040;
-                border-radius: 4px;
-                color: white;
-            }
-            QComboBox:hover {
-                border: 1px solid #505050;
-            }
-            QComboBox::drop-down {
-                border: none;
-            }
-            QComboBox QAbstractItemView {
-                background: #2d2d2d;
-                border: 1px solid #404040;
-                color: white;
-            }
-        """)
+        available_themes = ThemeManager.get_available_themes()
+        for theme in available_themes:
+            self.theme_combo.addItem(theme["name"], theme["code"])
+        
+        # Use application stylesheet; avoid inline colors so theme controls appearance
+        self.theme_combo.setStyleSheet("")
+        
         # Set current theme
         current_theme = self.data_manager.get_setting("theme", "dark")
-        theme_index = {"dark": 0, "light": 1, "vscode": 2}.get(current_theme, 0)
-        self.theme_combo.setCurrentIndex(theme_index)
+        theme_index = self.theme_combo.findData(current_theme)
+        if theme_index >= 0:
+            self.theme_combo.setCurrentIndex(theme_index)
+        
         layout.addWidget(self.theme_combo)
         
         # Language section
         self.lang_label = QLabel(self.lang_manager.get('settings.language', 'Language'))
-        self.lang_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #e0e0e0; margin-top: 20px;")
+        self.lang_label.setStyleSheet("font-size: 14px; font-weight: bold; margin-top: 20px;")
         layout.addWidget(self.lang_label)
         
+        # Language combo - dynamically loaded from languages/
         self.lang_combo = QComboBox()
         languages = self.lang_manager.get_available_languages()
         for lang in languages:
             self.lang_combo.addItem(f"{lang['name']}", lang["code"])
-        self.lang_combo.setStyleSheet(self.theme_combo.styleSheet())
+        self.lang_combo.setStyleSheet("")
         
         # Set current language
         current_lang = self.data_manager.get_setting("language", "en")
-        index = self.lang_combo.findData(current_lang)
-        if index >= 0:
-            self.lang_combo.setCurrentIndex(index)
+        lang_index = self.lang_combo.findData(current_lang)
+        if lang_index >= 0:
+            self.lang_combo.setCurrentIndex(lang_index)
+        
         layout.addWidget(self.lang_combo)
         
         layout.addStretch()
@@ -103,14 +90,12 @@ class SettingsPage(QWidget):
         self.reset_btn.setStyleSheet("""
             QPushButton {
                 background: transparent;
-                color: #b0b0b0;
                 border: 1px solid #404040;
                 padding: 10px 20px;
                 border-radius: 4px;
             }
             QPushButton:hover {
                 background: #404040;
-                color: white;
             }
         """)
         self.reset_btn.clicked.connect(self.reset_settings)
@@ -147,12 +132,15 @@ class SettingsPage(QWidget):
         )
         
         if reply == QMessageBox.StandardButton.Yes:
+            # Reset to defaults
             self.data_manager.update_setting("language", "en")
             self.data_manager.update_setting("theme", "dark")
             
+            # Apply defaults
             self.lang_manager.load_language("en")
             ThemeManager.apply_theme("dark")
             
+            # Refresh UI
             self.refresh_labels()
             self.settingsChanged.emit()
             
@@ -163,57 +151,72 @@ class SettingsPage(QWidget):
             )
     
     def save_settings(self):
-        theme_map = {0: "dark", 1: "light", 2: "vscode"}
-        theme_name = theme_map.get(self.theme_combo.currentIndex(), "dark")
-        self.data_manager.update_setting("theme", theme_name)
-        ThemeManager.apply_theme(theme_name)
+        # Get selected theme
+        theme_code = self.theme_combo.currentData()
+        old_theme = self.data_manager.get_setting("theme", "dark")
         
+        # Get selected language
         lang_code = self.lang_combo.currentData()
         old_lang = self.data_manager.get_setting("language", "en")
         
+        # Save settings
+        self.data_manager.update_setting("theme", theme_code)
         self.data_manager.update_setting("language", lang_code)
-        self.lang_manager.load_language(lang_code)
         
+        # Apply theme changes - update both palette and stylesheet
+        if theme_code != old_theme:
+            ThemeManager.apply_theme(theme_code)
+            # Apply the new stylesheet immediately to all widgets
+            app = QApplication.instance()
+            if app:
+                app.setStyleSheet(get_global_stylesheet(theme_code))
+                app.processEvents()
+            QMessageBox.information(
+                self,
+                "Theme Changed",
+                "Theme changed! All colors updated."
+            )
+        
+        # Apply language changes
         if lang_code != old_lang:
+            self.lang_manager.load_language(lang_code)
             self.refresh_labels()
         
         self.settingsChanged.emit()
         
-        QMessageBox.information(
-            self,
-            self.lang_manager.get('settings.title', 'Settings'),
-            self.lang_manager.get('settings.saved', 'Settings saved successfully!')
-        )
+        if theme_code == old_theme and lang_code == old_lang:
+            QMessageBox.information(
+                self,
+                self.lang_manager.get('settings.title', 'Settings'),
+                self.lang_manager.get('settings.saved', 'Settings saved successfully!')
+            )
     
     def refresh_labels(self):
-        """Refresh all labels with new language - FIXED VERSION"""
-        # Update title
+        """Refresh all labels with new language"""
         self.title_label.setText(self.lang_manager.get('settings.title', 'Settings'))
-        
-        # Update section labels
         self.theme_label.setText(self.lang_manager.get('settings.appearance', 'Theme'))
         self.lang_label.setText(self.lang_manager.get('settings.language', 'Language'))
         
-        # Update combo boxes
-        current_theme_idx = self.theme_combo.currentIndex()
+        # Refresh theme combo (names might be translated)
+        current_theme_code = self.theme_combo.currentData()
         self.theme_combo.clear()
-        self.theme_combo.addItems([
-            self.lang_manager.get('settings.dark', 'Dark'),
-            self.lang_manager.get('settings.light', 'Light'),
-            self.lang_manager.get('settings.vscode', 'VS Code')
-        ])
-        self.theme_combo.setCurrentIndex(current_theme_idx)
+        available_themes = ThemeManager.get_available_themes()
+        for theme in available_themes:
+            self.theme_combo.addItem(theme["name"], theme["code"])
+        theme_index = self.theme_combo.findData(current_theme_code)
+        if theme_index >= 0:
+            self.theme_combo.setCurrentIndex(theme_index)
         
-        # Update language combo
+        # Refresh language combo
         current_lang_code = self.lang_combo.currentData()
         self.lang_combo.clear()
         languages = self.lang_manager.get_available_languages()
         for lang in languages:
             self.lang_combo.addItem(f"{lang['name']}", lang["code"])
-        index = self.lang_combo.findData(current_lang_code)
-        if index >= 0:
-            self.lang_combo.setCurrentIndex(index)
+        lang_index = self.lang_combo.findData(current_lang_code)
+        if lang_index >= 0:
+            self.lang_combo.setCurrentIndex(lang_index)
         
-        # Update buttons
+        # Refresh buttons
         self.reset_btn.setText(self.lang_manager.get('settings.reset', 'Reset to Defaults'))
         self.save_btn.setText(self.lang_manager.get('settings.save', 'Save Changes'))
